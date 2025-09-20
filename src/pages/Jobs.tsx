@@ -402,7 +402,7 @@ export default function Jobs() {
               </TabsList>
               
               <TabsContent value="details" className="space-y-4">
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4">
                   <div>
                     <Label htmlFor="customer_id">Customer *</Label>
                     <Select
@@ -527,16 +527,7 @@ export default function Jobs() {
                       rows={3}
                     />
                   </div>
-
-                  <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">
-                      {editingJob ? 'Update' : 'Create'}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
+                </div>
               </TabsContent>
               
               <TabsContent value="materials" className="space-y-4">
@@ -547,6 +538,19 @@ export default function Jobs() {
                 />
               </TabsContent>
             </Tabs>
+            
+            <div className="flex gap-2 mt-6">
+              <Button 
+                onClick={handleSubmit} 
+                className="flex-1"
+                type="button"
+              >
+                {editingJob ? 'Update' : 'Create'}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="customer_id">Customer *</Label>
