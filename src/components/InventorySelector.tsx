@@ -15,7 +15,8 @@ interface InventoryItem {
   quantity: number;
   cost?: number;
   category?: string;
-  brand?: string;
+  make?: string;
+  module?: string;
   fcc_id?: string;
 }
 
@@ -120,7 +121,8 @@ export function InventorySelector({ jobId, selectedItems, onItemsChange }: Inven
   const filteredInventory = inventory.filter(item =>
     item.key_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.make?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.module?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -175,9 +177,14 @@ export function InventorySelector({ jobId, selectedItems, onItemsChange }: Inven
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <h4 className="font-medium">{item.key_type}</h4>
-                                {item.brand && (
+                                {item.make && (
                                   <Badge variant="outline" className="text-xs">
-                                    {item.brand}
+                                    {item.make}
+                                  </Badge>
+                                )}
+                                {item.module && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {item.module}
                                   </Badge>
                                 )}
                               </div>

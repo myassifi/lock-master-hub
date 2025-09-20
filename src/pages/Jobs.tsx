@@ -270,7 +270,7 @@ export default function Jobs() {
         const inventoryIds = data.map(item => item.inventory_id);
         const { data: inventoryData, error: invError } = await supabase
           .from('inventory')
-          .select('id, key_type, sku, quantity, cost, category, brand')
+          .select('id, key_type, sku, quantity, cost, category, make, module, fcc_id')
           .in('id', inventoryIds);
 
         if (invError) throw invError;

@@ -88,7 +88,6 @@ export type Database = {
       }
       inventory: {
         Row: {
-          brand: string | null
           category: string | null
           cost: number | null
           created_at: string
@@ -97,6 +96,8 @@ export type Database = {
           key_type: string
           last_used_date: string | null
           low_stock_threshold: number | null
+          make: string | null
+          module: string | null
           quantity: number
           sku: string
           supplier: string | null
@@ -108,7 +109,6 @@ export type Database = {
           year_to: number | null
         }
         Insert: {
-          brand?: string | null
           category?: string | null
           cost?: number | null
           created_at?: string
@@ -117,6 +117,8 @@ export type Database = {
           key_type: string
           last_used_date?: string | null
           low_stock_threshold?: number | null
+          make?: string | null
+          module?: string | null
           quantity?: number
           sku: string
           supplier?: string | null
@@ -128,7 +130,6 @@ export type Database = {
           year_to?: number | null
         }
         Update: {
-          brand?: string | null
           category?: string | null
           cost?: number | null
           created_at?: string
@@ -137,6 +138,8 @@ export type Database = {
           key_type?: string
           last_used_date?: string | null
           low_stock_threshold?: number | null
+          make?: string | null
+          module?: string | null
           quantity?: number
           sku?: string
           supplier?: string | null

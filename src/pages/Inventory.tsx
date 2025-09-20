@@ -152,7 +152,7 @@ export default function Inventory() {
     const stats: InventoryStats = {
       totalValue: items.reduce((sum, item) => sum + (item.total_cost_value || 0), 0),
       totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
-      lowStockCount: items.filter(item => item.quantity <= item.low_stock_threshold && item.quantity > 0).length,
+      lowStockCount: items.filter(item => item.quantity <= 3 && item.quantity > 0).length,
       outOfStockCount: items.filter(item => item.quantity === 0).length,
       categoryCounts: {},
       topUsedItems: items
@@ -180,7 +180,8 @@ export default function Inventory() {
         item.key_type.toLowerCase().includes(search.toLowerCase()) ||
         item.sku.toLowerCase().includes(search.toLowerCase()) ||
         item.supplier?.toLowerCase().includes(search.toLowerCase()) ||
-        item.brand?.toLowerCase().includes(search.toLowerCase()) ||
+        item.make?.toLowerCase().includes(search.toLowerCase()) ||
+        item.module?.toLowerCase().includes(search.toLowerCase()) ||
         item.category?.toLowerCase().includes(search.toLowerCase())
       );
     }
@@ -190,15 +191,20 @@ export default function Inventory() {
       filtered = filtered.filter(item => item.category === currentFilters.category);
     }
 
-    // Brand filter
-    if (currentFilters.brand !== 'all') {
-      filtered = filtered.filter(item => item.brand === currentFilters.brand);
+    // Make filter
+    if (currentFilters.make !== 'all') {
+      filtered = filtered.filter(item => item.make === currentFilters.make);
+    }
+
+    // Module filter
+    if (currentFilters.module !== 'all') {
+      filtered = filtered.filter(item => item.module === currentFilters.module);
     }
 
     // Stock status filter
     if (currentFilters.stockStatus !== 'all') {
       filtered = filtered.filter(item => {
-        const isLow = item.quantity <= item.low_stock_threshold;
+        const isLow = item.quantity <= 3; // Fixed low stock threshold
         const isOut = item.quantity === 0;
         
         switch (currentFilters.stockStatus) {
@@ -269,7 +275,8 @@ export default function Inventory() {
   const clearFilters = () => {
     const defaultFilters: FilterState = {
       category: 'all',
-      brand: 'all',
+      make: 'all',
+      module: 'all',
       stockStatus: 'all',
       supplier: 'all',
       priceRange: 'all',
@@ -289,18 +296,27 @@ export default function Inventory() {
     return suppliers;
   };
 
-  const getUniqueBrands = () => {
-    const brands = inventory
-      .map(item => item.brand)
+  const getUniqueMakes = () => {
+    const makes = inventory
+      .map(item => item.make)
       .filter(Boolean)
-      .filter((brand, index, array) => array.indexOf(brand) === index);
-    return brands;
+      .filter((make, index, array) => array.indexOf(make) === index);
+    return makes;
+  };
+
+  const getUniqueModules = () => {
+    const modules = inventory
+      .map(item => item.module)
+      .filter(Boolean)
+      .filter((module, index, array) => array.indexOf(module) === index);
+    return modules;
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (filters.category !== 'all') count++;
-    if (filters.brand !== 'all') count++;
+    if (filters.make !== 'all') count++;
+    if (filters.module !== 'all') count++;
     if (filters.stockStatus !== 'all') count++;
     if (filters.supplier !== 'all') count++;
     if (filters.priceRange !== 'all') count++;
@@ -368,7 +384,7 @@ export default function Inventory() {
         ...formData,
         quantity: parseInt(formData.quantity),
         cost: formData.cost ? parseFloat(formData.cost) : null,
-        low_stock_threshold: parseInt(formData.low_stock_threshold),
+        low_stock_threshold: 3, // Fixed low stock threshold
         year_from: formData.year_from ? parseInt(formData.year_from) : null,
         year_to: formData.year_to ? parseInt(formData.year_to) : null,
         total_cost_value: formData.cost ? parseFloat(formData.cost) * parseInt(formData.quantity) : 0,
@@ -433,9 +449,9 @@ export default function Inventory() {
       quantity: item.quantity.toString(),
       cost: item.cost ? item.cost.toString() : '',
       supplier: item.supplier || '',
-      low_stock_threshold: item.low_stock_threshold.toString(),
       category: item.category || 'General',
-      brand: item.brand || '',
+      make: item.make || '',
+      module: item.module || '',
       year_from: item.year_from ? item.year_from.toString() : '',
       year_to: item.year_to ? item.year_to.toString() : '',
       fcc_id: (item as any).fcc_id || ''
@@ -512,9 +528,9 @@ export default function Inventory() {
       quantity: '',
       cost: '',
       supplier: '',
-      low_stock_threshold: '5',
       category: 'Automotive Keys',
-      brand: '',
+      make: '',
+      module: '',
       year_from: '',
       year_to: '',
       fcc_id: ''
@@ -523,7 +539,7 @@ export default function Inventory() {
   };
 
   const isLowStock = (item: InventoryItem) => {
-    return item.quantity <= item.low_stock_threshold && item.quantity > 0;
+    return item.quantity <= 3 && item.quantity > 0;
   };
 
   const lowStockItems = inventory.filter(isLowStock);
@@ -736,27 +752,41 @@ export default function Inventory() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="brand" className="mobile-text">Brand</Label>
+                    <Label htmlFor="make" className="mobile-text">Make</Label>
                     <Input
-                      id="brand"
-                      value={formData.brand}
-                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                      placeholder="e.g., Toyota, Schlage, Kwikset"
+                      id="make"
+                      value={formData.make}
+                      onChange={(e) => setFormData({ ...formData, make: e.target.value })}
+                      placeholder="e.g., Toyota, Honda, Ford"
                       className="touch-target"
                     />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
-                  <Input
-                    id="key_type"
-                    value={formData.key_type}
-                    onChange={(e) => setFormData({ ...formData, key_type: e.target.value })}
-                    required
-                    placeholder="e.g., Toyota G Chip, Remote Fob"
-                    className="touch-target"
-                  />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
+                    <Input
+                      id="key_type"
+                      value={formData.key_type}
+                      onChange={(e) => setFormData({ ...formData, key_type: e.target.value })}
+                      required
+                      placeholder="e.g., Toyota G Chip, Remote Fob"
+                      className="touch-target"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="module" className="mobile-text">Module</Label>
+                    <Input
+                      id="module"
+                      value={formData.module}
+                      onChange={(e) => setFormData({ ...formData, module: e.target.value })}
+                      placeholder="e.g., ECU, BCM, Smart Module"
+                      className="touch-target"
+                    />
+                  </div>
                 </div>
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="quantity" className="mobile-text">Quantity *</Label>
@@ -771,28 +801,17 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="low_stock_threshold" className="mobile-text">Low Stock Alert</Label>
+                    <Label htmlFor="cost" className="mobile-text">Cost</Label>
                     <Input
-                      id="low_stock_threshold"
+                      id="cost"
                       type="number"
-                      min="0"
-                      value={formData.low_stock_threshold}
-                      onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                      step="0.01"
+                      value={formData.cost}
+                      onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                      placeholder="0.00"
                       className="touch-target"
                     />
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="cost" className="mobile-text">Cost</Label>
-                  <Input
-                    id="cost"
-                    type="number"
-                    step="0.01"
-                    value={formData.cost}
-                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                    placeholder="0.00"
-                    className="touch-target"
-                  />
                 </div>
                 
                 {/* Vehicle Year Range Section */}
@@ -912,15 +931,30 @@ export default function Inventory() {
                   </div>
 
                   <div>
-                    <Label>Brand</Label>
-                    <Select value={filters.brand} onValueChange={(value) => handleFilterChange({ brand: value })}>
+                    <Label>Make</Label>
+                    <Select value={filters.make} onValueChange={(value) => handleFilterChange({ make: value })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Brands</SelectItem>
-                        {getUniqueBrands().map(brand => (
-                          <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
+                        <SelectItem value="all">All Makes</SelectItem>
+                        {getUniqueMakes().map(make => (
+                          <SelectItem key={make} value={make!}>{make}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Module</Label>
+                    <Select value={filters.module} onValueChange={(value) => handleFilterChange({ module: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Modules</SelectItem>
+                        {getUniqueModules().map(module => (
+                          <SelectItem key={module} value={module!}>{module}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1033,7 +1067,7 @@ export default function Inventory() {
               Out ({inventory.filter(item => item.quantity === 0).length})
             </TabsTrigger>
             <TabsTrigger value="good" onClick={() => handleFilterChange({ stockStatus: 'good' })}>
-              In Stock ({inventory.filter(item => item.quantity > item.low_stock_threshold).length})
+              In Stock ({inventory.filter(item => item.quantity > 3).length})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -1077,9 +1111,14 @@ export default function Inventory() {
                       <Badge variant="outline" className="text-xs">
                         {item.category || 'General'}
                       </Badge>
-                      {item.brand && (
+                      {item.make && (
                         <Badge variant="secondary" className="text-xs">
-                          {item.brand}
+                          {item.make}
+                        </Badge>
+                      )}
+                      {item.module && (
+                        <Badge variant="outline" className="text-xs">
+                          {item.module}
                         </Badge>
                       )}
                     </div>
