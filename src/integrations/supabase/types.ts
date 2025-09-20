@@ -191,6 +191,39 @@ export type Database = {
           },
         ]
       }
+      job_inventory: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_id: string
+          job_id: string
+          quantity_used: number
+          total_cost: number | null
+          unit_cost: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_id: string
+          job_id: string
+          quantity_used?: number
+          total_cost?: number | null
+          unit_cost?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_id?: string
+          job_id?: string
+          quantity_used?: number
+          total_cost?: number | null
+          unit_cost?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           created_at: string
@@ -198,10 +231,13 @@ export type Database = {
           id: string
           job_date: string
           job_type: Database["public"]["Enums"]["job_type"]
+          material_cost: number | null
           notes: string | null
           photos: string[] | null
           price: number | null
+          profit_margin: number | null
           status: Database["public"]["Enums"]["job_status"]
+          total_cost: number | null
           updated_at: string
           vehicle_lock_details: string | null
         }
@@ -211,10 +247,13 @@ export type Database = {
           id?: string
           job_date?: string
           job_type: Database["public"]["Enums"]["job_type"]
+          material_cost?: number | null
           notes?: string | null
           photos?: string[] | null
           price?: number | null
+          profit_margin?: number | null
           status?: Database["public"]["Enums"]["job_status"]
+          total_cost?: number | null
           updated_at?: string
           vehicle_lock_details?: string | null
         }
@@ -224,10 +263,13 @@ export type Database = {
           id?: string
           job_date?: string
           job_type?: Database["public"]["Enums"]["job_type"]
+          material_cost?: number | null
           notes?: string | null
           photos?: string[] | null
           price?: number | null
+          profit_margin?: number | null
           status?: Database["public"]["Enums"]["job_status"]
+          total_cost?: number | null
           updated_at?: string
           vehicle_lock_details?: string | null
         }

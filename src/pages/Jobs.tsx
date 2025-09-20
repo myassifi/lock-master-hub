@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Calendar, DollarSign, Phone, MapPin, Navigation } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, DollarSign, Phone, MapPin, Navigation, Package, TrendingUp, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
+import { InventorySelector } from '@/components/InventorySelector';
 
 interface Job {
   id: string;
@@ -22,6 +24,9 @@ interface Job {
   job_type: string;
   vehicle_lock_details?: string;
   price?: number;
+  material_cost?: number;
+  profit_margin?: number;
+  total_cost?: number;
   job_date: string;
   status: string;
   notes?: string;
@@ -30,6 +35,22 @@ interface Job {
     name: string;
     phone?: string;
     address?: string;
+  };
+}
+
+interface JobInventoryItem {
+  inventory_id: string;
+  quantity_used: number;
+  unit_cost?: number;
+  total_cost?: number;
+  inventory?: {
+    id: string;
+    key_type: string;
+    sku: string;
+    quantity: number;
+    cost?: number;
+    category?: string;
+    brand?: string;
   };
 }
 
@@ -64,6 +85,7 @@ export default function Jobs() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedInventory, setSelectedInventory] = useState<JobInventoryItem[]>([]);
   const [formData, setFormData] = useState({
     customer_id: '',
     job_type: '',
@@ -128,6 +150,8 @@ export default function Jobs() {
         status: formData.status as any
       };
 
+      let jobId: string;
+
       if (editingJob) {
         const { error } = await supabase
           .from('jobs')
@@ -135,14 +159,23 @@ export default function Jobs() {
           .eq('id', editingJob.id);
 
         if (error) throw error;
+        jobId = editingJob.id;
         toast({ title: "Success", description: "Job updated successfully" });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('jobs')
-          .insert([jobData]);
+          .insert([jobData])
+          .select()
+          .single();
 
         if (error) throw error;
+        jobId = data.id;
         toast({ title: "Success", description: "Job created successfully" });
+      }
+
+      // Save inventory items
+      if (selectedInventory.length > 0) {
+        await saveJobInventory(jobId);
       }
       
       loadJobs();
@@ -158,7 +191,42 @@ export default function Jobs() {
     }
   };
 
-  const handleEdit = (job: Job) => {
+  const saveJobInventory = async (jobId: string) => {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Clear existing inventory for this job if editing
+      if (editingJob) {
+        await supabase
+          .from('job_inventory')
+          .delete()
+          .eq('job_id', jobId);
+      }
+
+      // Insert new inventory items
+      const inventoryData = selectedInventory.map(item => ({
+        job_id: jobId,
+        inventory_id: item.inventory_id,
+        quantity_used: item.quantity_used,
+        unit_cost: item.unit_cost || 0,
+        total_cost: item.total_cost || 0,
+        user_id: user.id
+      }));
+
+      const { error } = await supabase
+        .from('job_inventory')
+        .insert(inventoryData);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving job inventory:', error);
+      throw error;
+    }
+  };
+
+  const handleEdit = async (job: Job) => {
     setEditingJob(job);
     setFormData({
       customer_id: job.customer_id,
@@ -170,6 +238,48 @@ export default function Jobs() {
       notes: job.notes || ''
     });
     setSelectedDate(new Date(job.job_date));
+    
+    // Load existing inventory items for this job
+    try {
+      const { data, error } = await supabase
+        .from('job_inventory')
+        .select(`
+          inventory_id,
+          quantity_used,
+          unit_cost,
+          total_cost
+        `)
+        .eq('job_id', job.id);
+
+      if (error) throw error;
+      
+      // Load the actual inventory details separately
+      if (data && data.length > 0) {
+        const inventoryIds = data.map(item => item.inventory_id);
+        const { data: inventoryData, error: invError } = await supabase
+          .from('inventory')
+          .select('id, key_type, sku, quantity, cost, category, brand')
+          .in('id', inventoryIds);
+
+        if (invError) throw invError;
+
+        const inventoryItems = data.map(item => {
+          const inventory = inventoryData?.find(inv => inv.id === item.inventory_id);
+          return {
+            inventory_id: item.inventory_id,
+            quantity_used: item.quantity_used,
+            unit_cost: item.unit_cost,
+            total_cost: item.total_cost,
+            inventory
+          };
+        });
+        
+        setSelectedInventory(inventoryItems);
+      }
+    } catch (error) {
+      console.error('Error loading job inventory:', error);
+    }
+    
     setDialogOpen(true);
   };
 
@@ -207,6 +317,7 @@ export default function Jobs() {
       notes: ''
     });
     setSelectedDate(new Date());
+    setSelectedInventory([]);
     setEditingJob(null);
   };
 
@@ -277,12 +388,165 @@ export default function Jobs() {
               Add Job
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingJob ? 'Edit Job' : 'Add New Job'}
               </DialogTitle>
             </DialogHeader>
+            
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="details">Job Details</TabsTrigger>
+                <TabsTrigger value="materials">Materials</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details" className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="customer_id">Customer *</Label>
+                    <Select
+                      value={formData.customer_id}
+                      onValueChange={(value) => setFormData({ ...formData, customer_id: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select customer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customers.map(customer => (
+                          <SelectItem key={customer.id} value={customer.id}>
+                            {customer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="job_type">Job Type *</Label>
+                    <Select
+                      value={formData.job_type}
+                      onValueChange={(value) => setFormData({ ...formData, job_type: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select job type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {jobTypes.map(type => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="vehicle_lock_details">Vehicle/Lock Details</Label>
+                    <Input
+                      id="vehicle_lock_details"
+                      value={formData.vehicle_lock_details}
+                      onChange={(e) => setFormData({ ...formData, vehicle_lock_details: e.target.value })}
+                      placeholder="e.g., 2019 Honda Civic, Front door lock"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="price">Price</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        placeholder="0.00"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="status">Status</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value) => setFormData({ ...formData, status: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map(status => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Job Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !selectedDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(date) => {
+                            if (date) {
+                              setSelectedDate(date);
+                              setFormData({ ...formData, job_date: format(date, 'yyyy-MM-dd') });
+                            }
+                          }}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1">
+                      {editingJob ? 'Update' : 'Create'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="materials" className="space-y-4">
+                <InventorySelector
+                  jobId={editingJob?.id}
+                  selectedItems={selectedInventory}
+                  onItemsChange={setSelectedInventory}
+                />
+              </TabsContent>
+            </Tabs>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="customer_id">Customer *</Label>
@@ -520,7 +784,7 @@ export default function Jobs() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
+               <CardContent className="pt-0">
                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-2">
                     {job.vehicle_lock_details && (
@@ -531,13 +795,32 @@ export default function Jobs() {
                       {format(new Date(job.job_date), 'MMM dd, yyyy')}
                     </div>
                   </div>
+                  
                   <div className="space-y-2">
-                    {job.price && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <DollarSign className="h-4 w-4" />
-                        ${Number(job.price).toFixed(2)}
-                      </div>
-                    )}
+                    {/* Pricing Information */}
+                    <div className="space-y-1">
+                      {job.price && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Service:</span>
+                          <span className="font-medium">${Number(job.price).toFixed(2)}</span>
+                        </div>
+                      )}
+                      {job.material_cost && job.material_cost > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Materials:</span>
+                          <span className="font-medium text-orange-600">${Number(job.material_cost).toFixed(2)}</span>
+                        </div>
+                      )}
+                      {job.profit_margin !== undefined && job.profit_margin !== null && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Profit:</span>
+                          <span className={`font-medium ${job.profit_margin > 50 ? 'text-green-600' : job.profit_margin > 25 ? 'text-yellow-600' : 'text-red-600'}`}>
+                            {Number(job.profit_margin).toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
                     {job.customers?.phone && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Phone className="h-3 w-3" />
@@ -546,6 +829,19 @@ export default function Jobs() {
                     )}
                   </div>
                 </div>
+
+                {/* Material Usage Summary */}
+                {job.material_cost && job.material_cost > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Materials used</span>
+                      <Badge variant="outline" className="ml-auto">
+                        ${Number(job.material_cost).toFixed(2)}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
                 {job.notes && (
                   <div className="mt-4 pt-4 border-t">
                     <p className="text-sm text-muted-foreground">{job.notes}</p>
