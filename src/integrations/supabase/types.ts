@@ -24,7 +24,7 @@ export type Database = {
           entity_type: string
           id: string
           metadata: Json | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           action_type: string
@@ -35,7 +35,7 @@ export type Database = {
           entity_type: string
           id?: string
           metadata?: Json | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           action_type?: string
@@ -46,7 +46,7 @@ export type Database = {
           entity_type?: string
           id?: string
           metadata?: Json | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -245,6 +245,7 @@ export type Database = {
           status: Database["public"]["Enums"]["job_status"]
           total_cost: number | null
           updated_at: string
+          user_id: string
           vehicle_lock_details: string | null
         }
         Insert: {
@@ -261,6 +262,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["job_status"]
           total_cost?: number | null
           updated_at?: string
+          user_id: string
           vehicle_lock_details?: string | null
         }
         Update: {
@@ -277,6 +279,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["job_status"]
           total_cost?: number | null
           updated_at?: string
+          user_id?: string
           vehicle_lock_details?: string | null
         }
         Relationships: [
