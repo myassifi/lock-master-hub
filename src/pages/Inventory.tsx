@@ -680,11 +680,14 @@ export default function Inventory() {
                 <span className="sm:inline">Add Item</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto" aria-describedby="inventory-form-description">
               <DialogHeader>
                 <DialogTitle className="mobile-text">
                   {editingItem ? 'Edit Item' : 'Add New Item'}
                 </DialogTitle>
+                <p id="inventory-form-description" className="text-sm text-muted-foreground">
+                  {editingItem ? 'Update the details of this inventory item.' : 'Add a new item to your inventory with details like SKU, category, and pricing.'}
+                </p>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -822,9 +825,12 @@ export default function Inventory() {
                   )}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-md">
+              <DialogContent className="w-[95vw] max-w-md" aria-describedby="filter-description">
                 <DialogHeader>
                   <DialogTitle>Filter Inventory</DialogTitle>
+                  <p id="filter-description" className="text-sm text-muted-foreground">
+                    Apply filters to find specific inventory items by category, brand, stock status, and more.
+                  </p>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
@@ -1129,9 +1135,12 @@ export default function Inventory() {
 
       {/* Usage Tracking Dialog */}
       <Dialog open={usageDialogOpen} onOpenChange={setUsageDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-md">
+        <DialogContent className="w-[95vw] max-w-md" aria-describedby="usage-description">
           <DialogHeader>
             <DialogTitle>Record Usage - {selectedItem?.key_type}</DialogTitle>
+            <p id="usage-description" className="text-sm text-muted-foreground">
+              Track when inventory items are used in jobs. This will automatically reduce your stock count.
+            </p>
           </DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
