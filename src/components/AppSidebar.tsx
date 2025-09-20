@@ -42,18 +42,19 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r">
       <SidebarContent>
-        <div className="flex items-center gap-2 p-4 border-b">
-          <Flame className="h-8 w-8 text-accent" />
+        {/* Mobile-optimized brand section */}
+        <div className="flex items-center gap-2 p-3 sm:p-4 border-b">
+          <Flame className="h-6 w-6 sm:h-8 sm:w-8 text-accent flex-shrink-0" />
           {state !== "collapsed" && (
-            <div>
-              <h2 className="font-bold text-primary">Heat Wave</h2>
+            <div className="min-w-0">
+              <h2 className="font-bold text-primary text-sm sm:text-base truncate">Heat Wave</h2>
               <p className="text-xs text-muted-foreground">Locksmith</p>
             </div>
           )}
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Business Management</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs sm:text-sm">Business Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -62,10 +63,12 @@ export function AppSidebar() {
                     <NavLink 
                       to={item.url} 
                       end
-                      className={getNavClassName(item.url)}
+                      className={`${getNavClassName(item.url)} touch-target p-2 sm:p-3 rounded-lg transition-colors`}
                     >
-                      <item.icon className="h-4 w-4" />
-                      {state !== "collapsed" && <span>{item.title}</span>}
+                      <item.icon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                      {state !== "collapsed" && (
+                        <span className="text-sm sm:text-base truncate">{item.title}</span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

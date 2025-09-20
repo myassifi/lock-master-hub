@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, AlertTriangle, Package } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, AlertTriangle, Package, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { SearchBar } from '@/components/SearchBar';
+import { SkeletonCard } from '@/components/LoadingSpinner';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 
 interface InventoryItem {
   id: string;
@@ -22,10 +26,11 @@ interface InventoryItem {
 
 export default function Inventory() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const { isLoading, executeAsync } = useErrorHandler();
   const [formData, setFormData] = useState({
     sku: '',
     key_type: '',
@@ -35,12 +40,21 @@ export default function Inventory() {
     low_stock_threshold: '5'
   });
 
+  // Real-time updates
+  useRealtimeUpdates({
+    table: 'inventory',
+    onInsert: () => loadInventory(),
+    onUpdate: () => loadInventory(),
+    onDelete: () => loadInventory(),
+    showNotifications: true
+  });
+
   useEffect(() => {
     loadInventory();
   }, []);
 
   const loadInventory = async () => {
-    try {
+    await executeAsync(async () => {
       const { data, error } = await supabase
         .from('inventory')
         .select('*')
@@ -48,15 +62,25 @@ export default function Inventory() {
 
       if (error) throw error;
       setInventory(data || []);
-    } catch (error) {
-      console.error('Error loading inventory:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load inventory",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      setFilteredInventory(data || []);
+      return true;
+    }, {
+      errorMessage: "Failed to load inventory"
+    });
+  };
+
+  // Enhanced search functionality
+  const handleSearch = (query: string) => {
+    setSearchTerm(query);
+    if (!query.trim()) {
+      setFilteredInventory(inventory);
+    } else {
+      const filtered = inventory.filter(item =>
+        item.key_type.toLowerCase().includes(query.toLowerCase()) ||
+        item.sku.toLowerCase().includes(query.toLowerCase()) ||
+        item.supplier?.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredInventory(filtered);
     }
   };
 
@@ -176,26 +200,15 @@ export default function Inventory() {
     return item.quantity <= item.low_stock_threshold;
   };
 
-  const filteredInventory = inventory.filter(item =>
-    item.key_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.supplier?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const lowStockItems = inventory.filter(isLowStock);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Inventory</h1>
-        <div className="animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </CardContent>
-            </Card>
+      <div className="space-y-4 sm:space-y-6 fade-in">
+        <h1 className="mobile-heading font-bold">Inventory</h1>
+        <div className="mobile-grid">
+          {[...Array(6)].map((_, i) => (
+            <SkeletonCard key={i} />
           ))}
         </div>
       </div>
@@ -203,13 +216,14 @@ export default function Inventory() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">Inventory</h1>
+    <div className="space-y-4 sm:space-y-6 fade-in">
+      {/* Mobile-optimized header */}
+      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start sm:space-y-0 gap-4">
+        <div className="min-w-0">
+          <h1 className="mobile-heading font-bold text-primary">Inventory</h1>
           {lowStockItems.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertTriangle className="h-4 w-4 text-destructive animate-pulse" />
               <span className="text-sm text-destructive">
                 {lowStockItems.length} item{lowStockItems.length !== 1 ? 's' : ''} low in stock
               </span>
@@ -217,46 +231,58 @@ export default function Inventory() {
           )}
         </div>
         
+        {/* Mobile-friendly search */}
+        <div className="w-full sm:max-w-md">
+          <SearchBar
+            placeholder="Search inventory..."
+            onSearch={handleSearch}
+            onClear={() => handleSearch('')}
+          />
+        </div>
+        
+        {/* Mobile-optimized dialog */}
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 w-full sm:w-auto responsive-btn touch-target">
               <Plus className="h-4 w-4" />
-              Add Item
+              <span className="sm:inline">Add Item</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="mobile-text">
                 {editingItem ? 'Edit Item' : 'Add New Item'}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="sku">SKU *</Label>
+                <Label htmlFor="sku" className="mobile-text">SKU *</Label>
                 <Input
                   id="sku"
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   required
                   placeholder="e.g., HY17, HON66"
+                  className="touch-target"
                 />
               </div>
               <div>
-                <Label htmlFor="key_type">Key Type *</Label>
+                <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
                 <Input
                   id="key_type"
                   value={formData.key_type}
                   onChange={(e) => setFormData({ ...formData, key_type: e.target.value })}
                   required
                   placeholder="e.g., Toyota G Chip, Remote Fob"
+                  className="touch-target"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="quantity">Quantity *</Label>
+                  <Label htmlFor="quantity" className="mobile-text">Quantity *</Label>
                   <Input
                     id="quantity"
                     type="number"
@@ -264,21 +290,23 @@ export default function Inventory() {
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                     required
+                    className="touch-target"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="low_stock_threshold">Low Stock Alert</Label>
+                  <Label htmlFor="low_stock_threshold" className="mobile-text">Low Stock Alert</Label>
                   <Input
                     id="low_stock_threshold"
                     type="number"
                     min="0"
                     value={formData.low_stock_threshold}
                     onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                    className="touch-target"
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="cost">Cost</Label>
+                <Label htmlFor="cost" className="mobile-text">Cost</Label>
                 <Input
                   id="cost"
                   type="number"
@@ -286,22 +314,29 @@ export default function Inventory() {
                   value={formData.cost}
                   onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
                   placeholder="0.00"
+                  className="touch-target"
                 />
               </div>
               <div>
-                <Label htmlFor="supplier">Supplier</Label>
+                <Label htmlFor="supplier" className="mobile-text">Supplier</Label>
                 <Input
                   id="supplier"
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
                   placeholder="Supplier name"
+                  className="touch-target"
                 />
               </div>
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="submit" className="flex-1 touch-target responsive-btn">
                   {editingItem ? 'Update' : 'Add'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setDialogOpen(false)}
+                  className="touch-target responsive-btn"
+                >
                   Cancel
                 </Button>
               </div>
@@ -310,46 +345,44 @@ export default function Inventory() {
         </Dialog>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search inventory..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Inventory List */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Mobile-optimized inventory grid */}
+      <div className="mobile-grid">
         {filteredInventory.length === 0 ? (
           <Card className="col-span-full">
-            <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground">
+            <CardContent className="responsive-card text-center">
+              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mobile-text">
                 {searchTerm ? 'No items found matching your search.' : 'No inventory items added yet.'}
               </p>
             </CardContent>
           </Card>
         ) : (
-          filteredInventory.map((item) => (
-            <Card key={item.id} className={`hover:shadow-md transition-shadow ${isLowStock(item) ? 'border-destructive' : ''}`}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      {item.key_type}
+          filteredInventory.map((item, index) => (
+            <Card 
+              key={item.id} 
+              className={`hover-lift glass-card fade-in ${isLowStock(item) ? 'border-destructive' : ''}`}
+              style={{animationDelay: `${index * 100}ms`}}
+            >
+              <CardHeader className="pb-3 responsive-card">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <span className="truncate">{item.key_type}</span>
                       {isLowStock(item) && (
-                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                        <AlertTriangle className="h-4 w-4 text-destructive animate-pulse flex-shrink-0" />
                       )}
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                      SKU: {item.sku}
+                    </p>
                   </div>
                   <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(item)}
+                      className="touch-target h-8 w-8 p-0"
+                      title="Edit Item"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -357,15 +390,17 @@ export default function Inventory() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(item.id)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive touch-target h-8 w-8 p-0"
+                      title="Delete Item"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 responsive-card">
                 <div className="space-y-3">
+                  {/* Mobile-optimized quantity controls */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Quantity:</span>
                     <div className="flex items-center gap-2">
@@ -374,33 +409,39 @@ export default function Inventory() {
                         size="sm"
                         onClick={() => adjustQuantity(item.id, item.quantity - 1)}
                         disabled={item.quantity <= 0}
+                        className="touch-target h-8 w-8 p-0"
                       >
-                        -
+                        <Minus className="h-3 w-3" />
                       </Button>
-                      <Badge variant={isLowStock(item) ? "destructive" : "secondary"}>
+                      <Badge 
+                        variant={isLowStock(item) ? "destructive" : "secondary"}
+                        className="min-w-[3rem] text-center"
+                      >
                         {item.quantity}
                       </Badge>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => adjustQuantity(item.id, item.quantity + 1)}
+                        className="touch-target h-8 w-8 p-0"
                       >
-                        +
+                        <Plus className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                   
+                  {/* Mobile-optimized item details */}
                   {item.cost && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Cost:</span>
-                      <span>${Number(item.cost).toFixed(2)}</span>
+                      <span className="font-medium text-green-600">${Number(item.cost).toFixed(2)}</span>
                     </div>
                   )}
                   
                   {item.supplier && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Supplier:</span>
-                      <span>{item.supplier}</span>
+                      <span className="truncate max-w-[60%]" title={item.supplier}>{item.supplier}</span>
                     </div>
                   )}
                   

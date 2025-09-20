@@ -106,6 +106,38 @@ All colors MUST be HSL.
 
 /* Enhanced animations and transitions */
 @layer utilities {
+  /* Mobile-first responsive utilities */
+  .mobile-container {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .mobile-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+  
+  .mobile-card {
+    @apply p-4 sm:p-6;
+  }
+  
+  .mobile-text {
+    @apply text-sm sm:text-base;
+  }
+  
+  .mobile-heading {
+    @apply text-2xl sm:text-3xl;
+  }
+  
+  /* Smooth scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Touch-friendly buttons */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
   .glass-card {
     @apply bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg;
   }
@@ -131,6 +163,44 @@ All colors MUST be HSL.
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
+  
+  /* Mobile-specific improvements */
+  .mobile-overflow {
+    @apply overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent;
+  }
+  
+  .mobile-sticky {
+    @apply sticky top-0 z-10 bg-background/95 backdrop-blur-sm;
+  }
+  
+  /* Card responsive spacing */
+  .responsive-card {
+    @apply p-3 sm:p-4 md:p-6;
+  }
+  
+  /* Button responsive sizing */
+  .responsive-btn {
+    @apply px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base;
+  }
+}
+
+/* Scrollbar styling for webkit browsers */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
 }
 
 @keyframes fadeIn {
