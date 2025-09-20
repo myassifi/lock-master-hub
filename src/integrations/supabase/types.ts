@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          action_type: string
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
@@ -162,7 +198,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      log_activity: {
+        Args: {
+          p_action_type: string
+          p_description: string
+          p_entity_id: string
+          p_entity_name: string
+          p_entity_type: string
+          p_metadata?: Json
+          p_user_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       job_status: "pending" | "in_progress" | "completed" | "paid"
