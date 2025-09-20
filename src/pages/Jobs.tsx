@@ -440,6 +440,24 @@ export default function Jobs() {
                     <Badge className={getStatusColor(job.status)}>
                       {job.status.replace(/_/g, ' ')}
                     </Badge>
+                    {job.status !== 'paid' && job.price && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          supabase
+                            .from('jobs')
+                            .update({ status: 'paid' as any })
+                            .eq('id', job.id)
+                            .then(() => {
+                              toast({ title: "Success", description: "Job marked as paid" });
+                              loadJobs();
+                            });
+                        }}
+                      >
+                        Mark Paid
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"

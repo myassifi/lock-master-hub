@@ -9,7 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import Jobs from "./pages/Jobs";
 import Inventory from "./pages/Inventory";
-import Payments from "./pages/Payments";
+import Actions from "./pages/Actions";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -37,7 +37,7 @@ function AppRoutes() {
         <Route path="/customers" element={<Customers />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/inventory" element={<Inventory />} />
-        <Route path="/payments" element={<Payments />} />
+        <Route path="/actions" element={<Actions />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>

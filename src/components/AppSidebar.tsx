@@ -4,7 +4,7 @@ import {
   Users,
   Briefcase,
   Package,
-  CreditCard,
+  Zap,
   Flame
 } from 'lucide-react';
 import {
@@ -24,7 +24,7 @@ const menuItems = [
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Jobs', url: '/jobs', icon: Briefcase },
   { title: 'Inventory', url: '/inventory', icon: Package },
-  { title: 'Payments', url: '/payments', icon: CreditCard },
+  { title: 'Actions', url: '/actions', icon: Zap },
 ];
 
 export function AppSidebar() {
