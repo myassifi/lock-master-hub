@@ -455,9 +455,16 @@ export default function Customers() {
                     </div>
                   )}
                   {customer.address && (
-                    <div className="flex items-start gap-2 text-muted-foreground">
+                    <div className="flex items-start gap-2 text-muted-foreground hover:text-primary transition-colors">
                       <MapPin className="h-4 w-4 mt-0.5" />
-                      <span className="text-xs">{customer.address}</span>
+                      <a 
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs hover:underline cursor-pointer"
+                      >
+                        {customer.address}
+                      </a>
                     </div>
                   )}
                   
