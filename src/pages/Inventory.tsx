@@ -17,6 +17,7 @@ import { SkeletonCard } from '@/components/LoadingSpinner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { ActivityLogger } from '@/lib/activityLogger';
+import { CSVImport } from '@/components/CSVImport';
 
 interface InventoryItem {
   id: string;
@@ -680,17 +681,19 @@ export default function Inventory() {
             </div>
           </div>
           
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 w-full sm:w-auto responsive-btn touch-target">
-                <Plus className="h-4 w-4" />
-                <span className="sm:inline">Add Item</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto" aria-describedby="inventory-form-description">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <CSVImport />
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 w-full sm:w-auto responsive-btn touch-target">
+                  <Plus className="h-4 w-4" />
+                  <span className="sm:inline">Add Item</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto" aria-describedby="inventory-form-description">
               <DialogHeader>
                 <DialogTitle className="mobile-text">
                   {editingItem ? 'Edit Item' : 'Add New Item'}
@@ -842,6 +845,7 @@ export default function Inventory() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
 
         {/* Advanced Filter Panel */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
