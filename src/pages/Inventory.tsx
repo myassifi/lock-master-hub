@@ -26,7 +26,6 @@ interface InventoryItem {
   quantity: number;
   cost?: number;
   supplier?: string;
-  low_stock_threshold: number;
   created_at: string;
   category?: string;
   make?: string;
@@ -384,7 +383,6 @@ export default function Inventory() {
         ...formData,
         quantity: parseInt(formData.quantity),
         cost: formData.cost ? parseFloat(formData.cost) : null,
-        low_stock_threshold: 3, // Fixed low stock threshold
         year_from: formData.year_from ? parseInt(formData.year_from) : null,
         year_to: formData.year_to ? parseInt(formData.year_to) : null,
         total_cost_value: formData.cost ? parseFloat(formData.cost) * parseInt(formData.quantity) : 0,
@@ -1229,10 +1227,6 @@ export default function Inventory() {
                     </div>
                   )}
                   
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Low stock alert:</span>
-                    <span>{item.low_stock_threshold}</span>
-                  </div>
                 </div>
               </CardContent>
             </Card>
