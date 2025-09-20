@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -395,162 +395,6 @@ export default function Jobs() {
               </DialogTitle>
             </DialogHeader>
             
-            <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="details">Job Details</TabsTrigger>
-                <TabsTrigger value="materials">Materials</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="details" className="space-y-4">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="customer_id">Customer *</Label>
-                    <Select
-                      value={formData.customer_id}
-                      onValueChange={(value) => setFormData({ ...formData, customer_id: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select customer" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {customers.map(customer => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="job_type">Job Type *</Label>
-                    <Select
-                      value={formData.job_type}
-                      onValueChange={(value) => setFormData({ ...formData, job_type: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select job type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {jobTypes.map(type => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="vehicle_lock_details">Vehicle/Lock Details</Label>
-                    <Input
-                      id="vehicle_lock_details"
-                      value={formData.vehicle_lock_details}
-                      onChange={(e) => setFormData({ ...formData, vehicle_lock_details: e.target.value })}
-                      placeholder="e.g., 2019 Honda Civic, Front door lock"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="price">Price</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="status">Status</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(value) => setFormData({ ...formData, status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions.map(status => (
-                            <SelectItem key={status.value} value={status.value}>
-                              {status.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Job Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !selectedDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(date) => {
-                            if (date) {
-                              setSelectedDate(date);
-                              setFormData({ ...formData, job_date: format(date, 'yyyy-MM-dd') });
-                            }
-                          }}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="materials" className="space-y-4">
-                <InventorySelector
-                  jobId={editingJob?.id}
-                  selectedItems={selectedInventory}
-                  onItemsChange={setSelectedInventory}
-                />
-              </TabsContent>
-            </Tabs>
-            
-            <div className="flex gap-2 mt-6">
-              <Button 
-                onClick={handleSubmit} 
-                className="flex-1"
-                type="button"
-              >
-                {editingJob ? 'Update' : 'Create'}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="customer_id">Customer *</Label>
@@ -674,6 +518,15 @@ export default function Jobs() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={3}
+                />
+              </div>
+
+              <div>
+                <Label>Materials/Inventory</Label>
+                <InventorySelector
+                  jobId={editingJob?.id}
+                  selectedItems={selectedInventory}
+                  onItemsChange={setSelectedInventory}
                 />
               </div>
 
