@@ -14,7 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory: {
+        Row: {
+          cost: number | null
+          created_at: string
+          id: string
+          key_type: string
+          low_stock_threshold: number | null
+          quantity: number
+          sku: string
+          supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          id?: string
+          key_type: string
+          low_stock_threshold?: number | null
+          quantity?: number
+          sku: string
+          supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          id?: string
+          key_type?: string
+          low_stock_threshold?: number | null
+          quantity?: number
+          sku?: string
+          supplier?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          job_date: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          notes: string | null
+          photos: string[] | null
+          price: number | null
+          status: Database["public"]["Enums"]["job_status"]
+          updated_at: string
+          vehicle_lock_details: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          job_date?: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          notes?: string | null
+          photos?: string[] | null
+          price?: number | null
+          status?: Database["public"]["Enums"]["job_status"]
+          updated_at?: string
+          vehicle_lock_details?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          job_date?: string
+          job_type?: Database["public"]["Enums"]["job_type"]
+          notes?: string | null
+          photos?: string[] | null
+          price?: number | null
+          status?: Database["public"]["Enums"]["job_status"]
+          updated_at?: string
+          vehicle_lock_details?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +165,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      job_status: "pending" | "in_progress" | "completed" | "paid"
+      job_type:
+        | "spare_key"
+        | "all_keys_lost"
+        | "car_unlock"
+        | "smart_key_programming"
+        | "house_rekey"
+        | "lock_repair"
+        | "lock_installation"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +301,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      job_status: ["pending", "in_progress", "completed", "paid"],
+      job_type: [
+        "spare_key",
+        "all_keys_lost",
+        "car_unlock",
+        "smart_key_programming",
+        "house_rekey",
+        "lock_repair",
+        "lock_installation",
+        "other",
+      ],
+    },
   },
 } as const
