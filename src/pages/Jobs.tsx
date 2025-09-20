@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { InventorySelector } from '@/components/InventorySelector';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Job {
   id: string;
@@ -78,6 +79,7 @@ const statusOptions = [
 ];
 
 export default function Jobs() {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -142,12 +144,22 @@ export default function Jobs() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to manage jobs",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const jobData = {
         ...formData,
         price: formData.price ? parseFloat(formData.price) : null,
         job_type: formData.job_type as any,
-        status: formData.status as any
+        status: formData.status as any,
+        user_id: user.id // Add user_id for security
       };
 
       let jobId: string;
