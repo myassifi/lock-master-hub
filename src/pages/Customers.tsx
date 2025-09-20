@@ -14,6 +14,7 @@ import { SkeletonCard } from '@/components/LoadingSpinner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { format } from 'date-fns';
+import { ActivityLogger } from '@/lib/activityLogger';
 
 interface Customer {
   id: string;
@@ -147,13 +148,24 @@ export default function Customers() {
           .eq('id', editingCustomer.id);
 
         if (error) throw error;
+        
+        // Log activity
+        ActivityLogger.customerUpdated(formData.name, editingCustomer.id);
+        
         toast({ title: "Success", description: "Customer updated successfully" });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('customers')
-          .insert([formData]);
+          .insert([formData])
+          .select();
 
         if (error) throw error;
+        
+        // Log activity
+        if (data && data[0]) {
+          ActivityLogger.customerCreated(formData.name, data[0].id);
+        }
+        
         toast({ title: "Success", description: "Customer created successfully" });
       }
       
@@ -183,6 +195,10 @@ export default function Customers() {
   };
 
   const handleDelete = async (id: string) => {
+    // Find customer name before deletion
+    const customer = customers.find(c => c.id === id);
+    if (!customer) return;
+    
     if (!confirm('Are you sure you want to delete this customer?')) return;
     
     try {
@@ -192,6 +208,9 @@ export default function Customers() {
         .eq('id', id);
 
       if (error) throw error;
+      
+      // Log activity
+      ActivityLogger.customerDeleted(customer.name);
       
       toast({ title: "Success", description: "Customer deleted successfully" });
       loadCustomers();

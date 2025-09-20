@@ -12,6 +12,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { SkeletonCard } from '@/components/LoadingSpinner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { ActivityLogger } from '@/lib/activityLogger';
 
 interface InventoryItem {
   id: string;
@@ -102,13 +103,33 @@ export default function Inventory() {
           .eq('id', editingItem.id);
 
         if (error) throw error;
+        
+        // Log activity
+        ActivityLogger.inventoryUpdated(
+          formData.key_type,
+          itemData.quantity,
+          editingItem.id,
+          editingItem.quantity
+        );
+        
         toast({ title: "Success", description: "Item updated successfully" });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('inventory')
-          .insert([itemData]);
+          .insert([itemData])
+          .select();
 
         if (error) throw error;
+        
+        // Log activity
+        if (data && data[0]) {
+          ActivityLogger.inventoryAdded(
+            formData.key_type,
+            itemData.quantity,
+            data[0].id
+          );
+        }
+        
         toast({ title: "Success", description: "Item added successfully" });
       }
       
@@ -141,6 +162,10 @@ export default function Inventory() {
   };
 
   const handleDelete = async (id: string) => {
+    // Find the item to get its name before deletion
+    const item = inventory.find(item => item.id === id);
+    if (!item) return;
+    
     if (!confirm('Are you sure you want to delete this item?')) return;
     
     try {
@@ -150,6 +175,9 @@ export default function Inventory() {
         .eq('id', id);
 
       if (error) throw error;
+      
+      // Log activity
+      ActivityLogger.inventoryDeleted(item.key_type);
       
       toast({ title: "Success", description: "Item deleted successfully" });
       loadInventory();
@@ -166,6 +194,12 @@ export default function Inventory() {
   const adjustQuantity = async (id: string, newQuantity: number) => {
     if (newQuantity < 0) return;
     
+    // Find the item to get current quantity and name
+    const item = inventory.find(item => item.id === id);
+    if (!item) return;
+    
+    const quantityChange = newQuantity - item.quantity;
+    
     try {
       const { error } = await supabase
         .from('inventory')
@@ -173,6 +207,15 @@ export default function Inventory() {
         .eq('id', id);
 
       if (error) throw error;
+      
+      // Log activity
+      ActivityLogger.inventoryAdjusted(
+        item.key_type,
+        quantityChange,
+        newQuantity,
+        id
+      );
+      
       loadInventory();
     } catch (error) {
       console.error('Error updating quantity:', error);

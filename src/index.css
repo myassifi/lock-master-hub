@@ -166,7 +166,7 @@ All colors MUST be HSL.
   
   /* Mobile-specific improvements */
   .mobile-overflow {
-    @apply overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent;
+    @apply overflow-x-auto;
   }
   
   .mobile-sticky {
