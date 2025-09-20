@@ -8,89 +8,121 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Heat Wave Locksmith Pro - Blue & Orange Theme */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 213 27% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 213 27% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 213 27% 12%;
 
-    --primary: 200 100% 30%;
+    /* Primary Blue - Professional & Trustworthy */
+    --primary: 213 94% 68%;
     --primary-foreground: 0 0% 98%;
+    --primary-variant: 213 84% 58%;
 
-    --secondary: 200 50% 95%;
-    --secondary-foreground: 200 80% 20%;
+    /* Secondary Blue - Supporting accent */
+    --secondary: 213 32% 91%;
+    --secondary-foreground: 213 27% 12%;
 
-    --muted: 200 20% 95%;
-    --muted-foreground: 200 20% 45%;
+    /* Muted Blue Grays */
+    --muted: 213 27% 84%;
+    --muted-foreground: 213 27% 46%;
 
+    /* Accent Orange - Heat Wave Brand Color */
     --accent: 25 95% 53%;
     --accent-foreground: 0 0% 98%;
+    --accent-hover: 25 85% 48%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Success Green for healthy stock */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    /* Warning Orange for low stock */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    /* Destructive Red */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 200 30% 88%;
-    --input: 200 30% 88%;
-    --ring: 200 100% 30%;
+    /* Neutral borders */
+    --border: 213 27% 82%;
+    --input: 213 27% 82%;
+    --ring: 213 94% 68%;
 
-    --radius: 0.5rem;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(213, 94%, 68%), hsl(213, 84%, 58%));
+    --gradient-accent: linear-gradient(135deg, hsl(25, 95%, 53%), hsl(25, 85%, 48%));
+    --gradient-hero: linear-gradient(135deg, hsl(213, 94%, 68%) 0%, hsl(25, 95%, 53%) 100%);
 
-    --sidebar-background: 0 0% 98%;
+    /* Shadows with brand colors */
+    --shadow-primary: 0 10px 30px -10px hsl(213 94% 68% / 0.3);
+    --shadow-accent: 0 10px 30px -10px hsl(25 95% 53% / 0.3);
+    --shadow-card: 0 4px 6px -1px hsl(213 27% 12% / 0.1);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --radius: 0.75rem;
 
-    --sidebar-primary: 240 5.9% 10%;
-
+    /* Sidebar theme */
+    --sidebar-background: 213 32% 91%;
+    --sidebar-foreground: 213 27% 12%;
+    --sidebar-primary: 213 94% 68%;
     --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 213 27% 84%;
+    --sidebar-accent-foreground: 213 27% 12%;
+    --sidebar-border: 213 27% 82%;
+    --sidebar-ring: 213 94% 68%;
   }
 
   .dark {
-    --background: 200 20% 8%;
-    --foreground: 200 20% 95%;
+    /* Dark mode - Professional night theme */
+    --background: 213 27% 8%;
+    --foreground: 213 27% 95%;
 
-    --card: 200 20% 10%;
-    --card-foreground: 200 20% 95%;
+    --card: 213 27% 10%;
+    --card-foreground: 213 27% 95%;
 
-    --popover: 200 20% 10%;
-    --popover-foreground: 200 20% 95%;
+    --popover: 213 27% 10%;
+    --popover-foreground: 213 27% 95%;
 
-    --primary: 200 100% 50%;
-    --primary-foreground: 200 20% 8%;
+    --primary: 213 94% 68%;
+    --primary-foreground: 213 27% 8%;
+    --primary-variant: 213 84% 58%;
 
-    --secondary: 200 30% 15%;
-    --secondary-foreground: 200 20% 95%;
+    --secondary: 213 27% 15%;
+    --secondary-foreground: 213 27% 95%;
 
-    --muted: 200 30% 15%;
-    --muted-foreground: 200 20% 65%;
+    --muted: 213 27% 15%;
+    --muted-foreground: 213 27% 65%;
 
     --accent: 25 95% 53%;
-    --accent-foreground: 200 20% 8%;
+    --accent-foreground: 213 27% 8%;
+    --accent-hover: 25 85% 48%;
 
-    --destructive: 0 62.8% 30.6%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 200 30% 20%;
-    --input: 200 30% 20%;
-    --ring: 200 100% 50%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 213 27% 20%;
+    --input: 213 27% 20%;
+    --ring: 213 94% 68%;
+
+    /* Dark mode sidebar */
+    --sidebar-background: 213 27% 6%;
+    --sidebar-foreground: 213 27% 95%;
+    --sidebar-primary: 213 94% 68%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 213 27% 15%;
+    --sidebar-accent-foreground: 213 27% 95%;
+    --sidebar-border: 213 27% 15%;
+    --sidebar-ring: 213 94% 68%;
   }
 }
 
@@ -104,8 +136,46 @@ All colors MUST be HSL.
   }
 }
 
-/* Enhanced animations and transitions */
+/* Heat Wave Locksmith Pro - Enhanced Design System */
 @layer utilities {
+  /* Professional card styles */
+  .pro-card {
+    @apply bg-card/95 backdrop-blur-sm border border-border/50 shadow-card rounded-xl;
+  }
+  
+  .stat-card {
+    @apply pro-card hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1;
+  }
+  
+  .stat-card-primary {
+    @apply bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:border-primary/40;
+  }
+  
+  .stat-card-success {
+    @apply bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 hover:border-green-500/40;
+  }
+  
+  .stat-card-warning {
+    @apply bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20 hover:border-yellow-500/40;
+  }
+  
+  .stat-card-accent {
+    @apply bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20 hover:border-accent/40;
+  }
+  
+  /* Stock status indicators */
+  .stock-healthy {
+    @apply text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300;
+  }
+  
+  .stock-warning {
+    @apply text-warning bg-warning/10 dark:bg-warning/20;
+  }
+  
+  .stock-critical {
+    @apply text-destructive bg-destructive/10 dark:bg-destructive/20;
+  }
+  
   /* Mobile-first responsive utilities */
   .mobile-container {
     @apply px-4 sm:px-6 lg:px-8;
@@ -113,6 +183,10 @@ All colors MUST be HSL.
   
   .mobile-grid {
     @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+  
+  .mobile-stats-grid {
+    @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
   }
   
   .mobile-card {
@@ -124,63 +198,98 @@ All colors MUST be HSL.
   }
   
   .mobile-heading {
-    @apply text-2xl sm:text-3xl;
+    @apply text-2xl sm:text-3xl lg:text-4xl;
   }
   
-  /* Smooth scrolling */
+  /* Professional button styles */
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary to-primary-variant hover:from-primary-variant hover:to-primary text-primary-foreground shadow-primary;
+  }
+  
+  .btn-accent {
+    @apply bg-gradient-to-r from-accent to-accent-hover hover:from-accent-hover hover:to-accent text-accent-foreground shadow-accent;
+  }
+  
+  /* Touch-friendly interactions */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  .tap-highlight {
+    @apply transition-all duration-200 active:scale-95 active:brightness-95;
+  }
+  
+  /* Professional animations */
   .smooth-scroll {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Touch-friendly buttons */
-  .touch-target {
-    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
-  }
-  
-  .glass-card {
-    @apply bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg;
-  }
-  
-  .hover-lift {
-    @apply transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1;
-  }
-  
   .fade-in {
-    animation: fadeIn 0.5s ease-in-out;
+    animation: fadeIn 0.6s ease-out;
   }
   
   .slide-up {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.4s ease-out;
+  }
+  
+  .scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1;
   }
   
   .pulse-success {
-    animation: pulseSuccess 1s ease-in-out;
+    animation: pulseSuccess 2s ease-in-out infinite;
   }
   
-  .shimmer {
-    background: linear-gradient(90deg, transparent, hsl(var(--muted)), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-  
-  /* Mobile-specific improvements */
-  .mobile-overflow {
-    @apply overflow-x-auto;
-  }
-  
+  /* Mobile sticky elements */
   .mobile-sticky {
-    @apply sticky top-0 z-10 bg-background/95 backdrop-blur-sm;
+    @apply sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b;
   }
   
-  /* Card responsive spacing */
-  .responsive-card {
-    @apply p-3 sm:p-4 md:p-6;
+  .floating-action {
+    @apply fixed bottom-20 right-4 z-40 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110;
   }
   
-  /* Button responsive sizing */
-  .responsive-btn {
-    @apply px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base;
+  /* Card view toggles */
+  .view-toggle {
+    @apply inline-flex items-center justify-center rounded-lg border border-border bg-card p-1;
+  }
+  
+  .view-toggle-item {
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+  
+  .view-toggle-active {
+    @apply bg-primary text-primary-foreground shadow-sm;
+  }
+  
+  /* Quantity indicators */
+  .quantity-healthy {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 border-green-200 dark:border-green-800;
+  }
+  
+  .quantity-warning {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800;
+  }
+  
+  .quantity-critical {
+    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 border-red-200 dark:border-red-800;
+  }
+  
+  /* Professional loading states */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--muted)),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
   }
 }
 
@@ -203,22 +312,62 @@ All colors MUST be HSL.
   background: hsl(var(--muted-foreground));
 }
 
+/* Professional animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { 
+    transform: translateY(100%); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    transform: scale(0.95); 
+    opacity: 0; 
+  }
+  to { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
 }
 
 @keyframes pulseSuccess {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; transform: scale(1.05); }
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1.02); 
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% { 
+    background-position: -200% 0; 
+  }
+  100% { 
+    background-position: 200% 0; 
+  }
+}
+
+/* Mobile bottom navigation */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t;
+  }
 }

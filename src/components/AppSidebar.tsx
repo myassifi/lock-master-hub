@@ -36,22 +36,27 @@ export function AppSidebar() {
   const getNavClassName = (path: string) => {
     const isActive = currentPath === path;
     return isActive 
-      ? "bg-primary/10 text-primary font-medium border-r-2 border-primary shadow-sm" 
-      : "hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-all duration-200";
+      ? "bg-primary text-primary-foreground font-medium shadow-sm scale-105 border-r-4 border-accent" 
+      : "hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-102";
   };
 
   return (
     <Sidebar 
-      className="border-r bg-sidebar-background/95 backdrop-blur-sm"
+      className="border-r bg-sidebar-background/95 backdrop-blur-sm shadow-lg"
       collapsible="icon"
     >
       <SidebarContent>
         {/* Enhanced brand section */}
-        <div className="flex items-center gap-3 p-4 border-b bg-card/50">
-          <Flame className="h-7 w-7 text-accent flex-shrink-0" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-primary/5 to-accent/5">
+          <div className="relative">
+            <Flame className="h-7 w-7 text-accent flex-shrink-0" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-accent to-primary rounded-full opacity-20 blur-sm"></div>
+          </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <h2 className="font-bold text-primary text-base truncate">Heat Wave</h2>
+              <h2 className="font-bold text-primary text-base truncate bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Heat Wave
+              </h2>
               <p className="text-xs text-muted-foreground">Locksmith Pro</p>
             </div>
           )}
@@ -70,13 +75,13 @@ export function AppSidebar() {
                       to={item.url} 
                       end
                       className={({ isActive }) => 
-                        `${getNavClassName(item.url)} touch-target p-3 rounded-lg transition-all duration-200 flex items-center gap-3 w-full ${
-                          isActive ? 'font-medium' : ''
+                        `${getNavClassName(item.url)} touch-target p-3 rounded-lg transition-all duration-200 flex items-center gap-3 w-full group ${
+                          isActive ? 'font-medium bg-primary text-primary-foreground shadow-md' : ''
                         }`
                       }
                       title={isCollapsed ? item.title : undefined}
                     >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <item.icon className="h-5 w-5 flex-shrink-0 group-hover:scale-110 transition-transform" />
                       {!isCollapsed && (
                         <span className="text-sm font-medium truncate">{item.title}</span>
                       )}

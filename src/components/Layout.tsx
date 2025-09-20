@@ -1,6 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { Button } from '@/components/ui/button';
 import { LogOut, Flame, Menu } from 'lucide-react';
 
@@ -59,12 +60,15 @@ export function Layout({ children }: LayoutProps) {
           </header>
 
           {/* Main content with improved mobile layout */}
-          <main className="flex-1 mobile-container py-4 sm:py-6 smooth-scroll overflow-auto">
+          <main className="flex-1 mobile-container py-4 sm:py-6 smooth-scroll overflow-auto relative">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>
           </main>
         </div>
+        
+        {/* Floating Action Button for Mobile */}
+        <FloatingActionButton />
       </div>
     </SidebarProvider>
   );
