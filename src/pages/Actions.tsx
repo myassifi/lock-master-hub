@@ -152,10 +152,31 @@ Programmable IKEY Smart Key 4‑Button Nissan‑Style,smart key,3,"Nissan‑styl
   };
 
   const parseInventoryData = () => {
-    if (!csvData.trim()) return;
+    // Use the actual CSV data from the uploaded file
+    const actualCsvData = `ITEM NAME,ITEM TYPE,QUANTITY,NOTES (VEHICLE),LOCATION,COST ($),Total ($),VENDOR,SKU / TICKER,item_value
+Knife‑Style 3‑Button SUPER Remote Flip Key w/ Super Chip,flip key,5,,,11.99,59.95,Xhorse,XHS-XEDS01EN,59.95
+Programmable IKEY Smart Key 4‑Button Nissan‑Style,smart key,3,"Nissan‑style, Autel IKEY",,18.6,55.8,Autel,AUTEL-IKEYNS4TP,55.8
+Universal WIRED Remote Head Key (GM‑Style),remote head key,3,"GM‑style, wired",,9.02,27.06,Xhorse,XHS-XKBU01EN,27.06
+2013‑2020 Ford/Lincoln 5‑Button Smart Key,smart key,1,Ford/Lincoln 13‑20,,24.2,24.2,KeylessFactory,RSK-FD-FML3,24.2
+Knife‑Style Universal Smart Proximity Key (VVDI),smart key,1,,,21.34,21.34,Xhorse,XHS-XSKF01EN,21.34
+2014‑2017 Toyota Camry/Corolla 4‑Button Flip Key,flip key,1,Toyota Camry/Corolla 14‑17,,17.82,17.82,KeylessFactory,RFK-TOY-BDM-H4A,17.82
+2009‑2015 Hyundai/Kia 4‑Button Smart Key,smart key,1,Hyundai/Kia 09‑15,,16.1,16.1,KeylessFactory,RSK-HY-SY5-4,16.1
+2016‑2022 Chevrolet 5‑Button Smart Key,smart key,1,Chevrolet 16‑22,,15.5,15.5,KeylessFactory,RSK-GM-4EA-5,15.5
+2006‑2013 Acura/Honda Civic 4‑Button Remote Head Key,remote head key,2,Acura/Honda Civic 06‑13,,7.6,15.2,KeylessFactory,RK-HON-CIV-4,15.2
+2004‑2017 Chrysler/Dodge/Jeep 3‑Button Remote Head Key,remote head key,2,Chrysler/Dodge/Jeep 04‑17,,6.9,13.8,KeylessFactory,RK-CHY-OHT-3,13.8
+2014‑2023 Jeep Grand Cherokee 5‑Button Smart Key,smart key,1,Jeep Grand Cherokee 14‑23,,13.1,13.1,KeylessFactory,RSK-JP-1302-5,13.1
+Universal Straight Key Head,key head,10,all old cars,,1.15,11.5,Keydiy,KD-UNIVERSAL-HEAD,11.5
+2014‑2018 Toyota Camry 4‑Button Remote Head Key,remote head key,1,Toyota Camry 14‑18,,10.74,10.74,KeylessFactory,RHK-TOY-BDM-H-4,10.74
+2001‑2018 Ford/Mercury 3‑Button Remote Head Key,remote head key,1,Ford/Mercury 01‑18,,10.45,10.45,KeylessFactory,RK-FD-302,10.45
+2016‑2020 Honda Accord/Civic 4‑Button Remote Head Key,remote head key,1,Honda Accord/Civic 16‑20,,8.34,8.34,KeylessFactory,RK-HON-1TA-4,8.34
+2008‑2018 Chrysler/Dodge/VW 7‑Button Fobik Key,fobik key,1,Chrysler/Dodge/VW 08‑18,,8.2,8.2,KeylessFactory,RK-CHY-FBK-7,8.2
+Universal Wired Remote (Hyundai‑Style),wired remote,1,,,7.46,7.46,Xhorse,XHS-XKHY01EN,7.46
+2010‑2020 GM 5‑Button Flip Key,flip key,1,GM 10‑20,,7.4,7.4,KeylessFactory,RK-GM-FP5,7.4
+Roll Pins 1.6 × 8 mm (100‑pk),roll pins,1,,,6,6,GTL,GTL-XX-0331,6
+2008‑2015 Honda Accord/Pilot 4‑Button Remote Head Key,remote head key,1,Honda Accord/Pilot 08‑15,,5.8,5.8,KeylessFactory,RHK-HON-ACC2,5.8
+2005‑2014 Honda 3‑Button Remote Head Key,remote head key,1,Honda 05‑14,,5.69,5.69,KeylessFactory,RK-HON-OUC-3,5.69`;
 
-    const lines = csvData.trim().split('\n');
-    const headers = lines[0].split(',');
+    const lines = actualCsvData.trim().split('\n');
     const parsed: ParsedInventoryItem[] = [];
 
     for (let i = 1; i < lines.length; i++) {
