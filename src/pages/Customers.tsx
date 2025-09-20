@@ -61,37 +61,41 @@ export default function Customers() {
 
   const loadCustomers = async () => {
     await executeAsync(async () => {
-      // Enhanced query with job statistics
-      const { data, error } = await supabase
+      // Get basic customer data first
+      const { data: customersData, error: customersError } = await supabase
         .from('customers')
-        .select(`
-          *,
-          jobs!inner(count),
-          jobs(price, created_at)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (customersError) throw customersError;
 
-      // Calculate statistics for each customer
-      const enhancedCustomers = data?.map(customer => {
-        const jobData = customer.jobs || [];
-        const paidJobs = jobData.filter((job: any) => job.price);
-        const totalRevenue = paidJobs.reduce((sum: number, job: any) => sum + (Number(job.price) || 0), 0);
-        const lastJobDate = jobData.length > 0 
-          ? jobData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.created_at
-          : null;
+      // Get job statistics for each customer
+      const customersWithStats = await Promise.all(
+        (customersData || []).map(async (customer) => {
+          // Get job count and revenue for this customer
+          const { data: jobsData } = await supabase
+            .from('jobs')
+            .select('price, created_at, status')
+            .eq('customer_id', customer.id);
 
-        return {
-          ...customer,
-          total_jobs: jobData.length,
-          total_revenue: totalRevenue,
-          last_job_date: lastJobDate
-        };
-      }) || [];
+          const totalJobs = jobsData?.length || 0;
+          const paidJobs = jobsData?.filter(job => job.status === 'paid') || [];
+          const totalRevenue = paidJobs.reduce((sum, job) => sum + (Number(job.price) || 0), 0);
+          const lastJobDate = jobsData && jobsData.length > 0 
+            ? jobsData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.created_at
+            : null;
 
-      setCustomers(enhancedCustomers);
-      setFilteredCustomers(enhancedCustomers);
+          return {
+            ...customer,
+            total_jobs: totalJobs,
+            total_revenue: totalRevenue,
+            last_job_date: lastJobDate
+          };
+        })
+      );
+
+      setCustomers(customersWithStats);
+      setFilteredCustomers(customersWithStats);
       return true;
     }, {
       errorMessage: "Failed to load customers"
