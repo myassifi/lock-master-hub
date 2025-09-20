@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, AlertTriangle, Package, Minus } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, AlertTriangle, Package, Minus, Filter, X, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { SearchBar } from '@/components/SearchBar';
 import { SkeletonCard } from '@/components/LoadingSpinner';
@@ -25,13 +28,32 @@ interface InventoryItem {
   created_at: string;
 }
 
+interface FilterState {
+  category: string;
+  stockStatus: string;
+  supplier: string;
+  priceRange: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+
 export default function Inventory() {
+  const { user } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const { isLoading, executeAsync } = useErrorHandler();
+  const [filters, setFilters] = useState<FilterState>({
+    category: 'all',
+    stockStatus: 'all',
+    supplier: 'all',
+    priceRange: 'all',
+    sortBy: 'key_type',
+    sortOrder: 'asc'
+  });
   const [formData, setFormData] = useState({
     sku: '',
     key_type: '',
@@ -55,6 +77,8 @@ export default function Inventory() {
   }, []);
 
   const loadInventory = async () => {
+    if (!user) return;
+    
     await executeAsync(async () => {
       const { data, error } = await supabase
         .from('inventory')
@@ -63,37 +87,147 @@ export default function Inventory() {
 
       if (error) throw error;
       setInventory(data || []);
-      setFilteredInventory(data || []);
+      applyFilters(data || [], searchTerm, filters);
       return true;
     }, {
       errorMessage: "Failed to load inventory"
     });
   };
 
-  // Enhanced search functionality
+  // Enhanced filtering system
+  const applyFilters = (items: InventoryItem[], search: string, currentFilters: FilterState) => {
+    let filtered = items;
+
+    // Search filter
+    if (search.trim()) {
+      filtered = filtered.filter(item =>
+        item.key_type.toLowerCase().includes(search.toLowerCase()) ||
+        item.sku.toLowerCase().includes(search.toLowerCase()) ||
+        item.supplier?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Stock status filter
+    if (currentFilters.stockStatus !== 'all') {
+      filtered = filtered.filter(item => {
+        const isLow = item.quantity <= item.low_stock_threshold;
+        const isOut = item.quantity === 0;
+        
+        switch (currentFilters.stockStatus) {
+          case 'low': return isLow && !isOut;
+          case 'out': return isOut;
+          case 'good': return !isLow;
+          default: return true;
+        }
+      });
+    }
+
+    // Supplier filter
+    if (currentFilters.supplier !== 'all') {
+      filtered = filtered.filter(item => item.supplier === currentFilters.supplier);
+    }
+
+    // Price range filter
+    if (currentFilters.priceRange !== 'all') {
+      filtered = filtered.filter(item => {
+        if (!item.cost) return currentFilters.priceRange === 'none';
+        const cost = item.cost;
+        
+        switch (currentFilters.priceRange) {
+          case 'low': return cost < 10;
+          case 'medium': return cost >= 10 && cost <= 50;
+          case 'high': return cost > 50;
+          case 'none': return false;
+          default: return true;
+        }
+      });
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      let valueA: any = a[currentFilters.sortBy as keyof InventoryItem];
+      let valueB: any = b[currentFilters.sortBy as keyof InventoryItem];
+
+      if (currentFilters.sortBy === 'cost') {
+        valueA = valueA || 0;
+        valueB = valueB || 0;
+      }
+
+      if (typeof valueA === 'string') {
+        valueA = valueA.toLowerCase();
+        valueB = valueB.toLowerCase();
+      }
+
+      if (currentFilters.sortOrder === 'desc') {
+        return valueA < valueB ? 1 : -1;
+      }
+      return valueA > valueB ? 1 : -1;
+    });
+
+    setFilteredInventory(filtered);
+  };
+
   const handleSearch = (query: string) => {
     setSearchTerm(query);
-    if (!query.trim()) {
-      setFilteredInventory(inventory);
-    } else {
-      const filtered = inventory.filter(item =>
-        item.key_type.toLowerCase().includes(query.toLowerCase()) ||
-        item.sku.toLowerCase().includes(query.toLowerCase()) ||
-        item.supplier?.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredInventory(filtered);
-    }
+    applyFilters(inventory, query, filters);
+  };
+
+  const handleFilterChange = (newFilters: Partial<FilterState>) => {
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+    applyFilters(inventory, searchTerm, updatedFilters);
+  };
+
+  const clearFilters = () => {
+    const defaultFilters: FilterState = {
+      category: 'all',
+      stockStatus: 'all',
+      supplier: 'all',
+      priceRange: 'all',
+      sortBy: 'key_type',
+      sortOrder: 'asc'
+    };
+    setFilters(defaultFilters);
+    setSearchTerm('');
+    applyFilters(inventory, '', defaultFilters);
+  };
+
+  const getUniqueSuppliers = () => {
+    const suppliers = inventory
+      .map(item => item.supplier)
+      .filter(Boolean)
+      .filter((supplier, index, array) => array.indexOf(supplier) === index);
+    return suppliers;
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (filters.stockStatus !== 'all') count++;
+    if (filters.supplier !== 'all') count++;
+    if (filters.priceRange !== 'all') count++;
+    if (searchTerm) count++;
+    return count;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to manage inventory",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       const itemData = {
         ...formData,
         quantity: parseInt(formData.quantity),
         cost: formData.cost ? parseFloat(formData.cost) : null,
-        low_stock_threshold: parseInt(formData.low_stock_threshold)
+        low_stock_threshold: parseInt(formData.low_stock_threshold),
+        user_id: user.id
       };
 
       if (editingItem) {
@@ -104,7 +238,6 @@ export default function Inventory() {
 
         if (error) throw error;
         
-        // Log activity
         ActivityLogger.inventoryUpdated(
           formData.key_type,
           itemData.quantity,
@@ -121,7 +254,6 @@ export default function Inventory() {
 
         if (error) throw error;
         
-        // Log activity
         if (data && data[0]) {
           ActivityLogger.inventoryAdded(
             formData.key_type,
@@ -162,7 +294,6 @@ export default function Inventory() {
   };
 
   const handleDelete = async (id: string) => {
-    // Find the item to get its name before deletion
     const item = inventory.find(item => item.id === id);
     if (!item) return;
     
@@ -176,7 +307,6 @@ export default function Inventory() {
 
       if (error) throw error;
       
-      // Log activity
       ActivityLogger.inventoryDeleted(item.key_type);
       
       toast({ title: "Success", description: "Item deleted successfully" });
@@ -194,7 +324,6 @@ export default function Inventory() {
   const adjustQuantity = async (id: string, newQuantity: number) => {
     if (newQuantity < 0) return;
     
-    // Find the item to get current quantity and name
     const item = inventory.find(item => item.id === id);
     if (!item) return;
     
@@ -208,7 +337,6 @@ export default function Inventory() {
 
       if (error) throw error;
       
-      // Log activity
       ActivityLogger.inventoryAdjusted(
         item.key_type,
         quantityChange,
@@ -245,6 +373,18 @@ export default function Inventory() {
 
   const lowStockItems = inventory.filter(isLowStock);
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">Please log in to manage inventory.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-4 sm:space-y-6 fade-in">
@@ -260,143 +400,289 @@ export default function Inventory() {
 
   return (
     <div className="space-y-4 sm:space-y-6 fade-in">
-      {/* Mobile-optimized header */}
-      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start sm:space-y-0 gap-4">
-        <div className="min-w-0">
-          <h1 className="mobile-heading font-bold text-primary">Inventory</h1>
-          {lowStockItems.length > 0 && (
-            <div className="flex items-center gap-2 mt-2">
-              <AlertTriangle className="h-4 w-4 text-destructive animate-pulse" />
-              <span className="text-sm text-destructive">
-                {lowStockItems.length} item{lowStockItems.length !== 1 ? 's' : ''} low in stock
-              </span>
+      {/* Enhanced header with filters */}
+      <div className="flex flex-col space-y-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div className="min-w-0">
+            <h1 className="mobile-heading font-bold text-primary">Inventory Management</h1>
+            {lowStockItems.length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertTriangle className="h-4 w-4 text-destructive animate-pulse" />
+                <span className="text-sm text-destructive">
+                  {lowStockItems.length} item{lowStockItems.length !== 1 ? 's' : ''} low in stock
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-4 mt-2">
+              <Badge variant="outline">{inventory.length} Total Items</Badge>
+              <Badge variant="outline">{filteredInventory.length} Showing</Badge>
+              {getActiveFiltersCount() > 0 && (
+                <Badge variant="secondary">{getActiveFiltersCount()} Filters Applied</Badge>
+              )}
             </div>
-          )}
-        </div>
-        
-        {/* Mobile-friendly search */}
-        <div className="w-full sm:max-w-md">
-          <SearchBar
-            placeholder="Search inventory..."
-            onSearch={handleSearch}
-            onClear={() => handleSearch('')}
-          />
-        </div>
-        
-        {/* Mobile-optimized dialog */}
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 w-full sm:w-auto responsive-btn touch-target">
-              <Plus className="h-4 w-4" />
-              <span className="sm:inline">Add Item</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="mobile-text">
-                {editingItem ? 'Edit Item' : 'Add New Item'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="sku" className="mobile-text">SKU *</Label>
-                <Input
-                  id="sku"
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  required
-                  placeholder="e.g., HY17, HON66"
-                  className="touch-target"
-                />
-              </div>
-              <div>
-                <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
-                <Input
-                  id="key_type"
-                  value={formData.key_type}
-                  onChange={(e) => setFormData({ ...formData, key_type: e.target.value })}
-                  required
-                  placeholder="e.g., Toyota G Chip, Remote Fob"
-                  className="touch-target"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          </div>
+          
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 w-full sm:w-auto responsive-btn touch-target">
+                <Plus className="h-4 w-4" />
+                <span className="sm:inline">Add Item</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="mobile-text">
+                  {editingItem ? 'Edit Item' : 'Add New Item'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="quantity" className="mobile-text">Quantity *</Label>
+                  <Label htmlFor="sku" className="mobile-text">SKU *</Label>
                   <Input
-                    id="quantity"
-                    type="number"
-                    min="0"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                     required
+                    placeholder="e.g., HY17, HON66"
                     className="touch-target"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="low_stock_threshold" className="mobile-text">Low Stock Alert</Label>
+                  <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
                   <Input
-                    id="low_stock_threshold"
-                    type="number"
-                    min="0"
-                    value={formData.low_stock_threshold}
-                    onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                    id="key_type"
+                    value={formData.key_type}
+                    onChange={(e) => setFormData({ ...formData, key_type: e.target.value })}
+                    required
+                    placeholder="e.g., Toyota G Chip, Remote Fob"
                     className="touch-target"
                   />
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="cost" className="mobile-text">Cost</Label>
-                <Input
-                  id="cost"
-                  type="number"
-                  step="0.01"
-                  value={formData.cost}
-                  onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                  placeholder="0.00"
-                  className="touch-target"
-                />
-              </div>
-              <div>
-                <Label htmlFor="supplier" className="mobile-text">Supplier</Label>
-                <Input
-                  id="supplier"
-                  value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  placeholder="Supplier name"
-                  className="touch-target"
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button type="submit" className="flex-1 touch-target responsive-btn">
-                  {editingItem ? 'Update' : 'Add'}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="quantity" className="mobile-text">Quantity *</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      min="0"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                      required
+                      className="touch-target"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="low_stock_threshold" className="mobile-text">Low Stock Alert</Label>
+                    <Input
+                      id="low_stock_threshold"
+                      type="number"
+                      min="0"
+                      value={formData.low_stock_threshold}
+                      onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                      className="touch-target"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="cost" className="mobile-text">Cost</Label>
+                  <Input
+                    id="cost"
+                    type="number"
+                    step="0.01"
+                    value={formData.cost}
+                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                    placeholder="0.00"
+                    className="touch-target"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="supplier" className="mobile-text">Supplier</Label>
+                  <Input
+                    id="supplier"
+                    value={formData.supplier}
+                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    placeholder="Supplier name"
+                    className="touch-target"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button type="submit" className="flex-1 touch-target responsive-btn">
+                    {editingItem ? 'Update' : 'Add'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setDialogOpen(false)}
+                    className="touch-target responsive-btn"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Advanced Filter Panel */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="w-full sm:max-w-md">
+            <SearchBar
+              placeholder="Search by SKU, type, or supplier..."
+              onSearch={handleSearch}
+              onClear={() => handleSearch('')}
+            />
+          </div>
+          
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2 touch-target">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filters
+                  {getActiveFiltersCount() > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+                      {getActiveFiltersCount()}
+                    </Badge>
+                  )}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setDialogOpen(false)}
-                  className="touch-target responsive-btn"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </DialogTrigger>
+              <DialogContent className="w-[95vw] max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Filter Inventory</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Stock Status</Label>
+                    <Select value={filters.stockStatus} onValueChange={(value) => handleFilterChange({ stockStatus: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Items</SelectItem>
+                        <SelectItem value="good">In Stock</SelectItem>
+                        <SelectItem value="low">Low Stock</SelectItem>
+                        <SelectItem value="out">Out of Stock</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Supplier</Label>
+                    <Select value={filters.supplier} onValueChange={(value) => handleFilterChange({ supplier: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Suppliers</SelectItem>
+                        {getUniqueSuppliers().map(supplier => (
+                          <SelectItem key={supplier} value={supplier!}>{supplier}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Price Range</Label>
+                    <Select value={filters.priceRange} onValueChange={(value) => handleFilterChange({ priceRange: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Prices</SelectItem>
+                        <SelectItem value="low">Under $10</SelectItem>
+                        <SelectItem value="medium">$10 - $50</SelectItem>
+                        <SelectItem value="high">Over $50</SelectItem>
+                        <SelectItem value="none">No Price Set</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Sort By</Label>
+                    <div className="flex gap-2">
+                      <Select value={filters.sortBy} onValueChange={(value) => handleFilterChange({ sortBy: value })}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="key_type">Key Type</SelectItem>
+                          <SelectItem value="sku">SKU</SelectItem>
+                          <SelectItem value="quantity">Quantity</SelectItem>
+                          <SelectItem value="cost">Price</SelectItem>
+                          <SelectItem value="supplier">Supplier</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleFilterChange({ 
+                          sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' 
+                        })}
+                        className="px-3"
+                      >
+                        {filters.sortOrder === 'asc' ? '↑' : '↓'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button onClick={clearFilters} variant="outline" className="flex-1">
+                      Clear All
+                    </Button>
+                    <Button onClick={() => setFilterDialogOpen(false)} className="flex-1">
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {getActiveFiltersCount() > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="touch-target">
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Filter Tabs */}
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all" onClick={() => handleFilterChange({ stockStatus: 'all' })}>
+              All ({inventory.length})
+            </TabsTrigger>
+            <TabsTrigger value="low" onClick={() => handleFilterChange({ stockStatus: 'low' })}>
+              Low Stock ({lowStockItems.length})
+            </TabsTrigger>
+            <TabsTrigger value="out" onClick={() => handleFilterChange({ stockStatus: 'out' })}>
+              Out ({inventory.filter(item => item.quantity === 0).length})
+            </TabsTrigger>
+            <TabsTrigger value="good" onClick={() => handleFilterChange({ stockStatus: 'good' })}>
+              In Stock ({inventory.filter(item => item.quantity > item.low_stock_threshold).length})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      {/* Mobile-optimized inventory grid */}
+      {/* Inventory Grid */}
       <div className="mobile-grid">
         {filteredInventory.length === 0 ? (
           <Card className="col-span-full">
             <CardContent className="responsive-card text-center">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mobile-text">
-                {searchTerm ? 'No items found matching your search.' : 'No inventory items added yet.'}
+                {searchTerm || getActiveFiltersCount() > 0 
+                  ? 'No items found matching your criteria.' 
+                  : 'No inventory items added yet.'}
               </p>
+              {(searchTerm || getActiveFiltersCount() > 0) && (
+                <Button variant="outline" onClick={clearFilters} className="mt-4">
+                  Clear Filters
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -443,7 +729,6 @@ export default function Inventory() {
               </CardHeader>
               <CardContent className="pt-0 responsive-card">
                 <div className="space-y-3">
-                  {/* Mobile-optimized quantity controls */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Quantity:</span>
                     <div className="flex items-center gap-2">
@@ -473,7 +758,6 @@ export default function Inventory() {
                     </div>
                   </div>
                   
-                  {/* Mobile-optimized item details */}
                   {item.cost && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Cost:</span>
