@@ -29,7 +29,8 @@ interface InventoryItem {
   low_stock_threshold: number;
   created_at: string;
   category?: string;
-  brand?: string;
+  make?: string;
+  module?: string;
   usage_count?: number;
   last_used_date?: string;
   total_cost_value?: number;
@@ -40,7 +41,8 @@ interface InventoryItem {
 
 interface FilterState {
   category: string;
-  brand: string;
+  make: string;
+  module: string;
   stockStatus: string;
   supplier: string;
   priceRange: string;
@@ -78,7 +80,8 @@ export default function Inventory() {
   const { isLoading, executeAsync } = useErrorHandler();
   const [filters, setFilters] = useState<FilterState>({
     category: 'all',
-    brand: 'all',
+    make: 'all',
+    module: 'all',
     stockStatus: 'all',
     supplier: 'all',
     priceRange: 'all',
@@ -91,9 +94,9 @@ export default function Inventory() {
     quantity: '',
     cost: '',
     supplier: '',
-    low_stock_threshold: '5',
     category: 'Automotive Keys',
-    brand: '',
+    make: '',
+    module: '',
     year_from: '',
     year_to: '',
     fcc_id: ''
