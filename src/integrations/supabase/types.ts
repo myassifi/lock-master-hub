@@ -103,6 +103,8 @@ export type Database = {
           updated_at: string
           usage_count: number | null
           user_id: string
+          year_from: number | null
+          year_to: number | null
         }
         Insert: {
           brand?: string | null
@@ -120,6 +122,8 @@ export type Database = {
           updated_at?: string
           usage_count?: number | null
           user_id: string
+          year_from?: number | null
+          year_to?: number | null
         }
         Update: {
           brand?: string | null
@@ -137,6 +141,8 @@ export type Database = {
           updated_at?: string
           usage_count?: number | null
           user_id?: string
+          year_from?: number | null
+          year_to?: number | null
         }
         Relationships: []
       }

@@ -32,6 +32,8 @@ interface InventoryItem {
   usage_count?: number;
   last_used_date?: string;
   total_cost_value?: number;
+  year_from?: number;
+  year_to?: number;
 }
 
 interface FilterState {
@@ -89,7 +91,9 @@ export default function Inventory() {
     supplier: '',
     low_stock_threshold: '5',
     category: 'Automotive Keys',
-    brand: ''
+    brand: '',
+    year_from: '',
+    year_to: ''
   });
 
   // Real-time updates
@@ -359,6 +363,8 @@ export default function Inventory() {
         quantity: parseInt(formData.quantity),
         cost: formData.cost ? parseFloat(formData.cost) : null,
         low_stock_threshold: parseInt(formData.low_stock_threshold),
+        year_from: formData.year_from ? parseInt(formData.year_from) : null,
+        year_to: formData.year_to ? parseInt(formData.year_to) : null,
         total_cost_value: formData.cost ? parseFloat(formData.cost) * parseInt(formData.quantity) : 0,
         user_id: user.id
       };
@@ -423,7 +429,9 @@ export default function Inventory() {
       supplier: item.supplier || '',
       low_stock_threshold: item.low_stock_threshold.toString(),
       category: item.category || 'General',
-      brand: item.brand || ''
+      brand: item.brand || '',
+      year_from: item.year_from ? item.year_from.toString() : '',
+      year_to: item.year_to ? item.year_to.toString() : ''
     });
     setDialogOpen(true);
   };
@@ -499,7 +507,9 @@ export default function Inventory() {
       supplier: '',
       low_stock_threshold: '5',
       category: 'Automotive Keys',
-      brand: ''
+      brand: '',
+      year_from: '',
+      year_to: ''
     });
     setEditingItem(null);
   };
@@ -774,6 +784,37 @@ export default function Inventory() {
                     className="touch-target"
                   />
                 </div>
+                
+                {/* Vehicle Year Range Section */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="year_from" className="mobile-text">Year From (Vehicle)</Label>
+                    <Input
+                      id="year_from"
+                      type="number"
+                      min="1900"
+                      max="2030"
+                      value={formData.year_from}
+                      onChange={(e) => setFormData({ ...formData, year_from: e.target.value })}
+                      placeholder="e.g., 2015"
+                      className="touch-target"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="year_to" className="mobile-text">Year To (Vehicle)</Label>
+                    <Input
+                      id="year_to"
+                      type="number"
+                      min="1900"
+                      max="2030"
+                      value={formData.year_to}
+                      onChange={(e) => setFormData({ ...formData, year_to: e.target.value })}
+                      placeholder="e.g., 2023"
+                      className="touch-target"
+                    />
+                  </div>
+                </div>
+                
                 <div>
                   <Label htmlFor="supplier" className="mobile-text">Supplier</Label>
                   <Input
