@@ -24,6 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from 'next-themes';
 import { Analytics } from '@/components/Analytics';
 import { format } from 'date-fns';
+import DataExport from '@/components/DataExport';
 
 interface DashboardStats {
   totalValue: number;
@@ -494,6 +495,11 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* Data Export Section */}
+          <div className="mobile-container">
+            <DataExport />
+          </div>
         </TabsContent>
 
         <TabsContent value="analytics">
