@@ -60,6 +60,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           address?: string | null
@@ -70,6 +71,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           updated_at?: string
+          user_id: string
         }
         Update: {
           address?: string | null
@@ -80,6 +82,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

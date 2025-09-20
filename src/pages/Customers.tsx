@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { SearchBar } from '@/components/SearchBar';
 import { SkeletonCard } from '@/components/LoadingSpinner';
@@ -30,6 +31,7 @@ interface Customer {
 }
 
 export default function Customers() {
+  const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -140,6 +142,15 @@ export default function Customers() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to manage customers",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       if (editingCustomer) {
         const { error } = await supabase
@@ -156,7 +167,7 @@ export default function Customers() {
       } else {
         const { data, error } = await supabase
           .from('customers')
-          .insert([formData])
+          .insert([{ ...formData, user_id: user.id }])
           .select();
 
         if (error) throw error;
@@ -230,6 +241,18 @@ export default function Customers() {
   };
 
   // Remove duplicate filteredCustomers as it's handled by handleSearch
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">Please log in to manage customers.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
