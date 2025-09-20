@@ -16,6 +16,7 @@ interface InventoryItem {
   cost?: number;
   category?: string;
   brand?: string;
+  fcc_id?: string;
 }
 
 interface JobInventoryItem {

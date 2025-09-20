@@ -35,6 +35,7 @@ interface InventoryItem {
   total_cost_value?: number;
   year_from?: number;
   year_to?: number;
+  fcc_id?: string;
 }
 
 interface FilterState {
@@ -94,7 +95,8 @@ export default function Inventory() {
     category: 'Automotive Keys',
     brand: '',
     year_from: '',
-    year_to: ''
+    year_to: '',
+    fcc_id: ''
   });
 
   // Real-time updates
@@ -432,7 +434,8 @@ export default function Inventory() {
       category: item.category || 'General',
       brand: item.brand || '',
       year_from: item.year_from ? item.year_from.toString() : '',
-      year_to: item.year_to ? item.year_to.toString() : ''
+      year_to: item.year_to ? item.year_to.toString() : '',
+      fcc_id: (item as any).fcc_id || ''
     });
     setDialogOpen(true);
   };
@@ -510,7 +513,8 @@ export default function Inventory() {
       category: 'Automotive Keys',
       brand: '',
       year_from: '',
-      year_to: ''
+      year_to: '',
+      fcc_id: ''
     });
     setEditingItem(null);
   };
@@ -828,6 +832,17 @@ export default function Inventory() {
                     className="touch-target"
                   />
                 </div>
+                
+                <div>
+                  <Label htmlFor="fcc_id" className="mobile-text">FCC ID</Label>
+                  <Input
+                    id="fcc_id"
+                    value={formData.fcc_id}
+                    onChange={(e) => setFormData({ ...formData, fcc_id: e.target.value })}
+                    placeholder="e.g., 2AATX-XKHY01EN"
+                    className="touch-target"
+                  />
+                </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button type="submit" className="flex-1 touch-target responsive-btn">
                     {editingItem ? 'Update' : 'Add'}
@@ -1068,6 +1083,11 @@ export default function Inventory() {
                     <p className="text-xs sm:text-sm text-muted-foreground truncate">
                       SKU: {item.sku}
                     </p>
+                    {item.fcc_id && (
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                        FCC ID: {item.fcc_id}
+                      </p>
+                    )}
                     {item.usage_count && item.usage_count > 0 && (
                       <p className="text-xs text-blue-600">
                         Used {item.usage_count} times

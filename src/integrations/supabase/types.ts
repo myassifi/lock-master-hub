@@ -92,6 +92,7 @@ export type Database = {
           category: string | null
           cost: number | null
           created_at: string
+          fcc_id: string | null
           id: string
           key_type: string
           last_used_date: string | null
@@ -111,6 +112,7 @@ export type Database = {
           category?: string | null
           cost?: number | null
           created_at?: string
+          fcc_id?: string | null
           id?: string
           key_type: string
           last_used_date?: string | null
@@ -130,6 +132,7 @@ export type Database = {
           category?: string | null
           cost?: number | null
           created_at?: string
+          fcc_id?: string | null
           id?: string
           key_type?: string
           last_used_date?: string | null
