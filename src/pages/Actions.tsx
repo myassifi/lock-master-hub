@@ -14,7 +14,10 @@ import {
   DollarSign,
   CheckCircle,
   AlertTriangle,
-  Zap
+  Zap,
+  Upload,
+  FileText,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +27,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -51,6 +56,19 @@ const quickJobTypes = [
   { value: 'smart_key_programming', label: 'Key Programming', icon: Zap, color: 'bg-purple-500' },
 ];
 
+interface ParsedInventoryItem {
+  original_name: string;
+  key_type: string;
+  year_range: string;
+  make: string;
+  buttons: string;
+  sku: string;
+  quantity: number;
+  cost: number;
+  supplier: string;
+  parsed_key_type: string;
+}
+
 export default function Actions() {
   const [stats, setStats] = useState<QuickStats>({
     todayJobs: 0,
@@ -64,7 +82,11 @@ export default function Actions() {
   const [loading, setLoading] = useState(true);
   const [quickJobDialog, setQuickJobDialog] = useState(false);
   const [searchDialog, setSearchDialog] = useState(false);
+  const [importDialog, setImportDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [csvData, setCsvData] = useState('');
+  const [parsedItems, setParsedItems] = useState<ParsedInventoryItem[]>([]);
+  const [importing, setImporting] = useState(false);
   const [quickJobData, setQuickJobData] = useState({
     customer_id: '',
     job_type: '',
@@ -74,8 +96,19 @@ export default function Actions() {
   
   const navigate = useNavigate();
 
+  // Sample CSV data from the uploaded file
+  const sampleCsvData = `ITEM NAME,ITEM TYPE,QUANTITY,NOTES (VEHICLE),LOCATION,COST ($),Total ($),VENDOR,SKU / TICKER,item_value
+Knife‑Style 3‑Button SUPER Remote Flip Key w/ Super Chip,flip key,5,,,11.99,59.95,Xhorse,XHS-XEDS01EN,59.95
+Programmable IKEY Smart Key 4‑Button Nissan‑Style,smart key,3,"Nissan‑style, Autel IKEY",,18.6,55.8,Autel,AUTEL-IKEYNS4TP,55.8
+2013‑2020 Ford/Lincoln 5‑Button Smart Key,smart key,1,Ford/Lincoln 13‑20,,24.2,24.2,KeylessFactory,RSK-FD-FML3,24.2
+2014‑2017 Toyota Camry/Corolla 4‑Button Flip Key,flip key,1,Toyota Camry/Corolla 14‑17,,17.82,17.82,KeylessFactory,RFK-TOY-BDM-H4A,17.82
+2009‑2015 Hyundai/Kia 4‑Button Smart Key,smart key,1,Hyundai/Kia 09‑15,,16.1,16.1,KeylessFactory,RSK-HY-SY5-4,16.1
+2016‑2022 Chevrolet 5‑Button Smart Key,smart key,1,Chevrolet 16‑22,,15.5,15.5,KeylessFactory,RSK-GM-4EA-5,15.5`;
+
   useEffect(() => {
     loadData();
+    // Auto-load the sample data
+    setCsvData(sampleCsvData);
   }, []);
 
   const loadData = async () => {
@@ -118,6 +151,110 @@ export default function Actions() {
     }
   };
 
+  const parseInventoryData = () => {
+    if (!csvData.trim()) return;
+
+    const lines = csvData.trim().split('\n');
+    const headers = lines[0].split(',');
+    const parsed: ParsedInventoryItem[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',');
+      if (values.length < 6) continue;
+
+      const itemName = values[0]?.replace(/"/g, '') || '';
+      const itemType = values[1]?.replace(/"/g, '') || '';
+      const quantity = parseInt(values[2]) || 0;
+      const cost = parseFloat(values[5]) || 0;
+      const vendor = values[7]?.replace(/"/g, '') || '';
+      const sku = values[8]?.replace(/"/g, '') || '';
+
+      // Parse year range (e.g., "2013‑2020", "2014‑2017")
+      const yearMatch = itemName.match(/(\d{4})(?:‑|-)(\d{4})/);
+      const yearRange = yearMatch ? `${yearMatch[1]}-${yearMatch[2]}` : '';
+
+      // Parse make/brand (Ford, Toyota, Honda, etc.)
+      const makeMatch = itemName.match(/(?:20\d{2}‑\d{4}\s+)?([A-Z][a-z]+(?:\/[A-Z][a-z]+)*)/);
+      const make = makeMatch ? makeMatch[1] : 'Universal';
+
+      // Parse button count
+      const buttonMatch = itemName.match(/(\d+)‑Button/);
+      const buttons = buttonMatch ? `${buttonMatch[1]}-Button` : '';
+
+      // Create organized key type
+      const parsedKeyType = `${make} ${yearRange} ${buttons} ${itemType}`.trim();
+
+      parsed.push({
+        original_name: itemName,
+        key_type: parsedKeyType || itemName,
+        year_range: yearRange,
+        make: make,
+        buttons: buttons,
+        sku: sku || `AUTO-${Date.now()}-${i}`,
+        quantity: quantity,
+        cost: cost,
+        supplier: vendor || 'Unknown',
+        parsed_key_type: itemType
+      });
+    }
+
+    setParsedItems(parsed);
+    toast({ 
+      title: "Data Parsed", 
+      description: `Successfully parsed ${parsed.length} inventory items` 
+    });
+  };
+
+  const importToInventory = async () => {
+    if (parsedItems.length === 0) {
+      toast({
+        title: "No Data",
+        description: "Please parse CSV data first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setImporting(true);
+    try {
+      // Prepare data for insertion
+      const inventoryData = parsedItems.map(item => ({
+        sku: item.sku,
+        key_type: item.key_type,
+        quantity: item.quantity,
+        cost: item.cost,
+        supplier: item.supplier,
+        low_stock_threshold: 5
+      }));
+
+      // Insert into database
+      const { error } = await supabase
+        .from('inventory')
+        .insert(inventoryData);
+
+      if (error) throw error;
+
+      toast({
+        title: "Import Successful",
+        description: `${inventoryData.length} items imported to inventory`
+      });
+      
+      setImportDialog(false);
+      setParsedItems([]);
+      setCsvData('');
+      loadData();
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import Failed",
+        description: error.message || "Failed to import inventory",
+        variant: "destructive"
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const createQuickJob = async () => {
     try {
       const jobData = {
@@ -144,7 +281,6 @@ export default function Actions() {
       });
     }
   };
-
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone?.includes(searchTerm)
@@ -164,6 +300,13 @@ export default function Actions() {
       icon: Search,
       color: 'bg-blue-500',
       action: () => setSearchDialog(true)
+    },
+    {
+      title: 'Import Inventory',
+      description: 'Bulk import from CSV',
+      icon: Upload,
+      color: 'bg-purple-500',
+      action: () => setImportDialog(true)
     },
     {
       title: 'View Jobs',
@@ -261,7 +404,7 @@ export default function Actions() {
       {/* Quick Actions */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           {actionCards.map((action, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer group" onClick={action.action}>
               <CardContent className="p-6">
@@ -481,6 +624,103 @@ export default function Actions() {
               ))}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Inventory Dialog */}
+      <Dialog open={importDialog} onOpenChange={setImportDialog}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Import Inventory from CSV</DialogTitle>
+          </DialogHeader>
+          
+          <Tabs defaultValue="parse" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="parse">Parse Data</TabsTrigger>
+              <TabsTrigger value="preview" disabled={parsedItems.length === 0}>
+                Preview ({parsedItems.length})
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="parse" className="space-y-4">
+              <div>
+                <Label>CSV Data</Label>
+                <Textarea
+                  value={csvData}
+                  onChange={(e) => setCsvData(e.target.value)}
+                  rows={10}
+                  placeholder="Paste your CSV data here..."
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Expected format: ITEM NAME, ITEM TYPE, QUANTITY, NOTES, LOCATION, COST, Total, VENDOR, SKU
+                </p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button onClick={parseInventoryData} className="flex-1">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Parse Data
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setCsvData(sampleCsvData)}
+                >
+                  Load Sample
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="preview" className="space-y-4">
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Organized Key Type</TableHead>
+                      <TableHead>Year</TableHead>
+                      <TableHead>Make</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Qty</TableHead>
+                      <TableHead>Cost</TableHead>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Supplier</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {parsedItems.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{item.key_type}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{item.year_range || 'Universal'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{item.make}</Badge>
+                        </TableCell>
+                        <TableCell>{item.parsed_key_type}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>${item.cost.toFixed(2)}</TableCell>
+                        <TableCell className="font-mono text-xs">{item.sku}</TableCell>
+                        <TableCell>{item.supplier}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={importToInventory} 
+                  disabled={importing || parsedItems.length === 0}
+                  className="flex-1"
+                >
+                  {importing ? 'Importing...' : `Import ${parsedItems.length} Items`}
+                </Button>
+                <Button variant="outline" onClick={() => setParsedItems([])}>
+                  Clear
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
