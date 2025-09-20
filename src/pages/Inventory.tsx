@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, AlertTriangle, Package, Minus, Filter, X, SlidersHorizontal } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, AlertTriangle, Package, Minus, Filter, X, SlidersHorizontal, TrendingUp, DollarSign, Clock, BarChart3, Bell, Archive, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -26,10 +27,16 @@ interface InventoryItem {
   supplier?: string;
   low_stock_threshold: number;
   created_at: string;
+  category?: string;
+  brand?: string;
+  usage_count?: number;
+  last_used_date?: string;
+  total_cost_value?: number;
 }
 
 interface FilterState {
   category: string;
+  brand: string;
   stockStatus: string;
   supplier: string;
   priceRange: string;
@@ -37,17 +44,37 @@ interface FilterState {
   sortOrder: 'asc' | 'desc';
 }
 
+interface InventoryStats {
+  totalValue: number;
+  totalItems: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  categoryCounts: Record<string, number>;
+  topUsedItems: InventoryItem[];
+}
+
 export default function Inventory() {
   const { user } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
+  const [inventoryStats, setInventoryStats] = useState<InventoryStats>({
+    totalValue: 0,
+    totalItems: 0,
+    lowStockCount: 0,
+    outOfStockCount: 0,
+    categoryCounts: {},
+    topUsedItems: []
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [usageDialogOpen, setUsageDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const { isLoading, executeAsync } = useErrorHandler();
   const [filters, setFilters] = useState<FilterState>({
     category: 'all',
+    brand: 'all',
     stockStatus: 'all',
     supplier: 'all',
     priceRange: 'all',
@@ -60,7 +87,9 @@ export default function Inventory() {
     quantity: '',
     cost: '',
     supplier: '',
-    low_stock_threshold: '5'
+    low_stock_threshold: '5',
+    category: 'Automotive Keys',
+    brand: ''
   });
 
   // Real-time updates
@@ -71,6 +100,20 @@ export default function Inventory() {
     onDelete: () => loadInventory(),
     showNotifications: true
   });
+
+  // Key Categories for locksmith business
+  const keyCategories = [
+    'Automotive Keys',
+    'House Keys', 
+    'Commercial Keys',
+    'High Security Keys',
+    'Remote Fobs',
+    'Smart Keys',
+    'Key Blanks',
+    'Hardware',
+    'Tools',
+    'General'
+  ];
 
   useEffect(() => {
     loadInventory();
@@ -87,11 +130,34 @@ export default function Inventory() {
 
       if (error) throw error;
       setInventory(data || []);
+      calculateStats(data || []);
       applyFilters(data || [], searchTerm, filters);
       return true;
     }, {
       errorMessage: "Failed to load inventory"
     });
+  };
+
+  const calculateStats = (items: InventoryItem[]) => {
+    const stats: InventoryStats = {
+      totalValue: items.reduce((sum, item) => sum + (item.total_cost_value || 0), 0),
+      totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
+      lowStockCount: items.filter(item => item.quantity <= item.low_stock_threshold && item.quantity > 0).length,
+      outOfStockCount: items.filter(item => item.quantity === 0).length,
+      categoryCounts: {},
+      topUsedItems: items
+        .filter(item => item.usage_count && item.usage_count > 0)
+        .sort((a, b) => (b.usage_count || 0) - (a.usage_count || 0))
+        .slice(0, 5)
+    };
+
+    // Calculate category counts
+    items.forEach(item => {
+      const category = item.category || 'General';
+      stats.categoryCounts[category] = (stats.categoryCounts[category] || 0) + 1;
+    });
+
+    setInventoryStats(stats);
   };
 
   // Enhanced filtering system
@@ -103,8 +169,20 @@ export default function Inventory() {
       filtered = filtered.filter(item =>
         item.key_type.toLowerCase().includes(search.toLowerCase()) ||
         item.sku.toLowerCase().includes(search.toLowerCase()) ||
-        item.supplier?.toLowerCase().includes(search.toLowerCase())
+        item.supplier?.toLowerCase().includes(search.toLowerCase()) ||
+        item.brand?.toLowerCase().includes(search.toLowerCase()) ||
+        item.category?.toLowerCase().includes(search.toLowerCase())
       );
+    }
+
+    // Category filter
+    if (currentFilters.category !== 'all') {
+      filtered = filtered.filter(item => item.category === currentFilters.category);
+    }
+
+    // Brand filter
+    if (currentFilters.brand !== 'all') {
+      filtered = filtered.filter(item => item.brand === currentFilters.brand);
     }
 
     // Stock status filter
@@ -181,6 +259,7 @@ export default function Inventory() {
   const clearFilters = () => {
     const defaultFilters: FilterState = {
       category: 'all',
+      brand: 'all',
       stockStatus: 'all',
       supplier: 'all',
       priceRange: 'all',
@@ -200,13 +279,66 @@ export default function Inventory() {
     return suppliers;
   };
 
+  const getUniqueBrands = () => {
+    const brands = inventory
+      .map(item => item.brand)
+      .filter(Boolean)
+      .filter((brand, index, array) => array.indexOf(brand) === index);
+    return brands;
+  };
+
   const getActiveFiltersCount = () => {
     let count = 0;
+    if (filters.category !== 'all') count++;
+    if (filters.brand !== 'all') count++;
     if (filters.stockStatus !== 'all') count++;
     if (filters.supplier !== 'all') count++;
     if (filters.priceRange !== 'all') count++;
     if (searchTerm) count++;
     return count;
+  };
+
+  // Usage tracking function
+  const recordUsage = async (itemId: string, quantityUsed: number, jobId?: string, notes?: string) => {
+    try {
+      const item = inventory.find(i => i.id === itemId);
+      if (!item) return;
+
+      const { error } = await supabase
+        .from('inventory_usage')
+        .insert([{
+          inventory_id: itemId,
+          job_id: jobId,
+          quantity_used: quantityUsed,
+          cost_per_unit: item.cost,
+          total_cost: (item.cost || 0) * quantityUsed,
+          notes,
+          user_id: user.id
+        }]);
+
+      if (error) throw error;
+
+      // Update inventory quantity
+      const newQuantity = Math.max(0, item.quantity - quantityUsed);
+      await supabase
+        .from('inventory')
+        .update({ quantity: newQuantity })
+        .eq('id', itemId);
+
+      toast({ 
+        title: "Usage Recorded", 
+        description: `Used ${quantityUsed} of ${item.key_type}` 
+      });
+      
+      loadInventory();
+    } catch (error) {
+      console.error('Error recording usage:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record usage",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,6 +359,7 @@ export default function Inventory() {
         quantity: parseInt(formData.quantity),
         cost: formData.cost ? parseFloat(formData.cost) : null,
         low_stock_threshold: parseInt(formData.low_stock_threshold),
+        total_cost_value: formData.cost ? parseFloat(formData.cost) * parseInt(formData.quantity) : 0,
         user_id: user.id
       };
 
@@ -288,7 +421,9 @@ export default function Inventory() {
       quantity: item.quantity.toString(),
       cost: item.cost ? item.cost.toString() : '',
       supplier: item.supplier || '',
-      low_stock_threshold: item.low_stock_threshold.toString()
+      low_stock_threshold: item.low_stock_threshold.toString(),
+      category: item.category || 'General',
+      brand: item.brand || ''
     });
     setDialogOpen(true);
   };
@@ -362,16 +497,55 @@ export default function Inventory() {
       quantity: '',
       cost: '',
       supplier: '',
-      low_stock_threshold: '5'
+      low_stock_threshold: '5',
+      category: 'Automotive Keys',
+      brand: ''
     });
     setEditingItem(null);
   };
 
   const isLowStock = (item: InventoryItem) => {
-    return item.quantity <= item.low_stock_threshold;
+    return item.quantity <= item.low_stock_threshold && item.quantity > 0;
   };
 
   const lowStockItems = inventory.filter(isLowStock);
+
+  // Smart Alerts
+  const getSmartAlerts = () => {
+    const alerts = [];
+    
+    // Low stock alerts
+    if (inventoryStats.lowStockCount > 0) {
+      alerts.push({
+        type: 'warning',
+        title: 'Low Stock Alert',
+        message: `${inventoryStats.lowStockCount} items need restocking`,
+        count: inventoryStats.lowStockCount
+      });
+    }
+    
+    // Out of stock alerts
+    if (inventoryStats.outOfStockCount > 0) {
+      alerts.push({
+        type: 'error',
+        title: 'Out of Stock',
+        message: `${inventoryStats.outOfStockCount} items are completely out of stock`,
+        count: inventoryStats.outOfStockCount
+      });
+    }
+    
+    // High value inventory alert
+    if (inventoryStats.totalValue > 10000) {
+      alerts.push({
+        type: 'info',
+        title: 'High Value Inventory',
+        message: `Your inventory is valued at $${inventoryStats.totalValue.toFixed(2)}`,
+        count: 1
+      });
+    }
+
+    return alerts;
+  };
 
   if (!user) {
     return (
@@ -400,24 +574,98 @@ export default function Inventory() {
 
   return (
     <div className="space-y-4 sm:space-y-6 fade-in">
+      {/* Smart Alerts Dashboard */}
+      {getSmartAlerts().length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {getSmartAlerts().map((alert, index) => (
+            <Card key={index} className={`border-l-4 ${
+              alert.type === 'error' ? 'border-l-destructive' : 
+              alert.type === 'warning' ? 'border-l-yellow-500' : 'border-l-blue-500'
+            }`}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Bell className={`h-4 w-4 ${
+                    alert.type === 'error' ? 'text-destructive' : 
+                    alert.type === 'warning' ? 'text-yellow-500' : 'text-blue-500'
+                  }`} />
+                  <h3 className="font-semibold">{alert.title}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Inventory Value Tracking Dashboard */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Value</p>
+                <p className="text-xl font-bold text-green-600">
+                  ${inventoryStats.totalValue.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Items</p>
+                <p className="text-xl font-bold text-blue-600">
+                  {inventoryStats.totalItems}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Low Stock</p>
+                <p className="text-xl font-bold text-yellow-600">
+                  {inventoryStats.lowStockCount}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-purple-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Categories</p>
+                <p className="text-xl font-bold text-purple-600">
+                  {Object.keys(inventoryStats.categoryCounts).length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Enhanced header with filters */}
       <div className="flex flex-col space-y-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div className="min-w-0">
-            <h1 className="mobile-heading font-bold text-primary">Inventory Management</h1>
-            {lowStockItems.length > 0 && (
-              <div className="flex items-center gap-2 mt-2">
-                <AlertTriangle className="h-4 w-4 text-destructive animate-pulse" />
-                <span className="text-sm text-destructive">
-                  {lowStockItems.length} item{lowStockItems.length !== 1 ? 's' : ''} low in stock
-                </span>
-              </div>
-            )}
+            <h1 className="mobile-heading font-bold text-primary">Smart Inventory Management</h1>
             <div className="flex items-center gap-4 mt-2">
-              <Badge variant="outline">{inventory.length} Total Items</Badge>
+              <Badge variant="outline">{inventory.length} Items</Badge>
               <Badge variant="outline">{filteredInventory.length} Showing</Badge>
               {getActiveFiltersCount() > 0 && (
-                <Badge variant="secondary">{getActiveFiltersCount()} Filters Applied</Badge>
+                <Badge variant="secondary">{getActiveFiltersCount()} Filters</Badge>
               )}
             </div>
           </div>
@@ -449,6 +697,31 @@ export default function Inventory() {
                     placeholder="e.g., HY17, HON66"
                     className="touch-target"
                   />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="category" className="mobile-text">Category *</Label>
+                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                      <SelectTrigger className="touch-target">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {keyCategories.map(category => (
+                          <SelectItem key={category} value={category}>{category}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="brand" className="mobile-text">Brand</Label>
+                    <Input
+                      id="brand"
+                      value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                      placeholder="e.g., Toyota, Schlage, Kwikset"
+                      className="touch-target"
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
@@ -554,6 +827,36 @@ export default function Inventory() {
                   <DialogTitle>Filter Inventory</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
+                  <div>
+                    <Label>Category</Label>
+                    <Select value={filters.category} onValueChange={(value) => handleFilterChange({ category: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {keyCategories.map(category => (
+                          <SelectItem key={category} value={category}>{category}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Brand</Label>
+                    <Select value={filters.brand} onValueChange={(value) => handleFilterChange({ brand: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Brands</SelectItem>
+                        {getUniqueBrands().map(brand => (
+                          <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div>
                     <Label>Stock Status</Label>
                     <Select value={filters.stockStatus} onValueChange={(value) => handleFilterChange({ stockStatus: value })}>
@@ -701,11 +1004,38 @@ export default function Inventory() {
                         <AlertTriangle className="h-4 w-4 text-destructive animate-pulse flex-shrink-0" />
                       )}
                     </CardTitle>
+                    <div className="flex gap-2 mt-1">
+                      <Badge variant="outline" className="text-xs">
+                        {item.category || 'General'}
+                      </Badge>
+                      {item.brand && (
+                        <Badge variant="secondary" className="text-xs">
+                          {item.brand}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs sm:text-sm text-muted-foreground truncate">
                       SKU: {item.sku}
                     </p>
+                    {item.usage_count && item.usage_count > 0 && (
+                      <p className="text-xs text-blue-600">
+                        Used {item.usage_count} times
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedItem(item);
+                        setUsageDialogOpen(true);
+                      }}
+                      className="touch-target h-8 w-8 p-0"
+                      title="Record Usage"
+                    >
+                      <Archive className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -760,8 +1090,15 @@ export default function Inventory() {
                   
                   {item.cost && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Cost:</span>
+                      <span className="text-muted-foreground">Unit Cost:</span>
                       <span className="font-medium text-green-600">${Number(item.cost).toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  {item.total_cost_value && item.total_cost_value > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Total Value:</span>
+                      <span className="font-bold text-green-600">${Number(item.total_cost_value).toFixed(2)}</span>
                     </div>
                   )}
                   
@@ -769,6 +1106,13 @@ export default function Inventory() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Supplier:</span>
                       <span className="truncate max-w-[60%]" title={item.supplier}>{item.supplier}</span>
+                    </div>
+                  )}
+
+                  {item.last_used_date && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Last Used:</span>
+                      <span className="text-xs">{new Date(item.last_used_date).toLocaleDateString()}</span>
                     </div>
                   )}
                   
@@ -782,6 +1126,56 @@ export default function Inventory() {
           ))
         )}
       </div>
+
+      {/* Usage Tracking Dialog */}
+      <Dialog open={usageDialogOpen} onOpenChange={setUsageDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-md">
+          <DialogHeader>
+            <DialogTitle>Record Usage - {selectedItem?.key_type}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const quantity = parseInt(formData.get('quantity') as string);
+            const notes = formData.get('notes') as string;
+            
+            if (selectedItem && quantity > 0) {
+              recordUsage(selectedItem.id, quantity, undefined, notes);
+              setUsageDialogOpen(false);
+            }
+          }} className="space-y-4">
+            <div>
+              <Label htmlFor="quantity">Quantity Used *</Label>
+              <Input
+                id="quantity"
+                name="quantity"
+                type="number"
+                min="1"
+                max={selectedItem?.quantity || 1}
+                required
+                placeholder="Enter quantity used"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Available: {selectedItem?.quantity || 0}
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Input
+                id="notes"
+                name="notes"
+                placeholder="Job details, customer, etc."
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">Record Usage</Button>
+              <Button type="button" variant="outline" onClick={() => setUsageDialogOpen(false)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

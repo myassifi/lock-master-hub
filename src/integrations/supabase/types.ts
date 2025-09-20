@@ -88,39 +88,105 @@ export type Database = {
       }
       inventory: {
         Row: {
+          brand: string | null
+          category: string | null
           cost: number | null
           created_at: string
           id: string
           key_type: string
+          last_used_date: string | null
           low_stock_threshold: number | null
           quantity: number
           sku: string
           supplier: string | null
+          total_cost_value: number | null
           updated_at: string
+          usage_count: number | null
         }
         Insert: {
+          brand?: string | null
+          category?: string | null
           cost?: number | null
           created_at?: string
           id?: string
           key_type: string
+          last_used_date?: string | null
           low_stock_threshold?: number | null
           quantity?: number
           sku: string
           supplier?: string | null
+          total_cost_value?: number | null
           updated_at?: string
+          usage_count?: number | null
         }
         Update: {
+          brand?: string | null
+          category?: string | null
           cost?: number | null
           created_at?: string
           id?: string
           key_type?: string
+          last_used_date?: string | null
           low_stock_threshold?: number | null
           quantity?: number
           sku?: string
           supplier?: string | null
+          total_cost_value?: number | null
           updated_at?: string
+          usage_count?: number | null
         }
         Relationships: []
+      }
+      inventory_usage: {
+        Row: {
+          cost_per_unit: number | null
+          id: string
+          inventory_id: string
+          job_id: string | null
+          notes: string | null
+          quantity_used: number
+          total_cost: number | null
+          used_date: string
+          user_id: string | null
+        }
+        Insert: {
+          cost_per_unit?: number | null
+          id?: string
+          inventory_id: string
+          job_id?: string | null
+          notes?: string | null
+          quantity_used: number
+          total_cost?: number | null
+          used_date?: string
+          user_id?: string | null
+        }
+        Update: {
+          cost_per_unit?: number | null
+          id?: string
+          inventory_id?: string
+          job_id?: string | null
+          notes?: string | null
+          quantity_used?: number
+          total_cost?: number | null
+          used_date?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_usage_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_usage_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       jobs: {
         Row: {
