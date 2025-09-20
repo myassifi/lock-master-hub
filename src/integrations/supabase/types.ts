@@ -318,6 +318,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      import_inventory_from_csv: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       log_activity: {
         Args: {
           p_action_type: string
