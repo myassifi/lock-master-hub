@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, DollarSign, Phone, MapPin, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,7 @@ interface Job {
   customers?: {
     name: string;
     phone?: string;
+    address?: string;
   };
 }
 
@@ -84,7 +85,7 @@ export default function Jobs() {
         .from('jobs')
         .select(`
           *,
-          customers (name, phone)
+          customers (name, phone, address)
         `)
         .order('created_at', { ascending: false });
 
@@ -211,10 +212,25 @@ export default function Jobs() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'paid': return 'bg-emerald-100 text-emerald-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-success/10 text-success border-success/20';
+      case 'in_progress': return 'bg-primary/10 text-primary border-primary/20';
+      case 'paid': return 'bg-accent/10 text-accent-foreground border-accent/20';
+      default: return 'bg-muted text-muted-foreground border-muted';
+    }
+  };
+
+  const handleCallCustomer = (phone: string) => {
+    if (phone) {
+      window.location.href = `tel:${phone.replace(/\s+/g, '')}`;
+    }
+  };
+
+  const handleGetDirections = (address: string, customerName: string) => {
+    if (address) {
+      const encodedAddress = encodeURIComponent(`${address} ${customerName}`);
+      // Try to open in Google Maps app first, fallback to web
+      const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
+      window.open(googleMapsUrl, '_blank');
     }
   };
 
@@ -432,12 +448,40 @@ export default function Jobs() {
             <Card key={job.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{job.customers?.name}</CardTitle>
+                  <div className="flex-1">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {job.customers?.name}
+                      {job.customers?.phone && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCallCustomer(job.customers.phone!)}
+                          className="h-6 w-6 p-0 text-primary hover:bg-primary/10"
+                        >
+                          <Phone className="h-3 w-3" />
+                        </Button>
+                      )}
+                      {job.customers?.address && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleGetDirections(job.customers.address!, job.customers.name)}
+                          className="h-6 w-6 p-0 text-primary hover:bg-primary/10"
+                        >
+                          <MapPin className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </CardTitle>
                     <p className="text-sm text-muted-foreground">{formatJobType(job.job_type)}</p>
+                    {job.customers?.address && (
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {job.customers.address}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(job.status)}>
+                    <Badge variant="outline" className={getStatusColor(job.status)}>
                       {job.status.replace(/_/g, ' ')}
                     </Badge>
                     {job.status !== 'paid' && job.price && (
@@ -495,7 +539,10 @@ export default function Jobs() {
                       </div>
                     )}
                     {job.customers?.phone && (
-                      <p className="text-muted-foreground">{job.customers.phone}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {job.customers.phone}
+                      </p>
                     )}
                   </div>
                 </div>
