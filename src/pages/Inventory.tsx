@@ -1062,23 +1062,6 @@ export default function Inventory() {
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Technical Details</h3>
                         
                         <div>
-                          <Label htmlFor="module_type" className="mobile-text">Module</Label>
-                          <Select 
-                            value={formData.module || ''} 
-                            onValueChange={(value) => setFormData({ ...formData, module: value })}
-                          >
-                            <SelectTrigger className="touch-target">
-                              <SelectValue placeholder="Select module" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {modules.map(module => (
-                                <SelectItem key={module} value={module}>{module}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
                           <Label htmlFor="supplier" className="mobile-text">Supplier</Label>
                           <Select 
                             value={formData.supplier} 
