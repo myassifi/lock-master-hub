@@ -45,6 +45,7 @@ interface FilterState {
   stockStatus: string;
   supplier: string;
   priceRange: string;
+  year: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
 }
@@ -84,6 +85,7 @@ export default function Inventory() {
     stockStatus: 'all',
     supplier: 'all',
     priceRange: 'all',
+    year: 'all',
     sortBy: 'key_type',
     sortOrder: 'asc'
   });
@@ -236,6 +238,35 @@ export default function Inventory() {
       });
     }
 
+    // Year filter
+    if (currentFilters.year !== 'all') {
+      filtered = filtered.filter(item => {
+        const targetYear = parseInt(currentFilters.year);
+        
+        // If item has no year range, include it only in 'no-year' filter
+        if (!item.year_from && !item.year_to) {
+          return currentFilters.year === 'no-year';
+        }
+        
+        // If item has year range, check if target year falls within it
+        if (item.year_from && item.year_to) {
+          return targetYear >= item.year_from && targetYear <= item.year_to;
+        }
+        
+        // If only year_from is specified, check if target year is >= year_from
+        if (item.year_from && !item.year_to) {
+          return targetYear >= item.year_from;
+        }
+        
+        // If only year_to is specified, check if target year is <= year_to
+        if (!item.year_from && item.year_to) {
+          return targetYear <= item.year_to;
+        }
+        
+        return false;
+      });
+    }
+
     // Sorting
     filtered.sort((a, b) => {
       let valueA: any = a[currentFilters.sortBy as keyof InventoryItem];
@@ -279,6 +310,7 @@ export default function Inventory() {
       stockStatus: 'all',
       supplier: 'all',
       priceRange: 'all',
+      year: 'all',
       sortBy: 'key_type',
       sortOrder: 'asc'
     };
@@ -309,6 +341,22 @@ export default function Inventory() {
       .filter(Boolean)
       .filter((module, index, array) => array.indexOf(module) === index);
     return modules;
+  };
+
+  const getUniqueYears = () => {
+    const years = new Set<number>();
+    inventory.forEach(item => {
+      if (item.year_from) years.add(item.year_from);
+      if (item.year_to) years.add(item.year_to);
+      
+      // Add all years in the range
+      if (item.year_from && item.year_to) {
+        for (let year = item.year_from; year <= item.year_to; year++) {
+          years.add(year);
+        }
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a); // Sort descending (newest first)
   };
 
   const getActiveFiltersCount = () => {
@@ -1000,6 +1048,22 @@ export default function Inventory() {
                         <SelectItem value="medium">$10 - $50</SelectItem>
                         <SelectItem value="high">Over $50</SelectItem>
                         <SelectItem value="none">No Price Set</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Year</Label>
+                    <Select value={filters.year} onValueChange={(value) => handleFilterChange({ year: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Years</SelectItem>
+                        <SelectItem value="no-year">No Year Specified</SelectItem>
+                        {getUniqueYears().map(year => (
+                          <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
