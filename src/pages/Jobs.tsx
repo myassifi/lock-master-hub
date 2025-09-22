@@ -390,6 +390,66 @@ export default function Jobs() {
 
   return (
     <div className="space-y-6">
+      {/* Service Pricing Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Service Pricing
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4 font-semibold">Service</th>
+                  <th className="text-left py-3 px-4 font-semibold">Price (USD)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="py-3 px-4">Spare key (non-prox / standard chip)</td>
+                  <td className="py-3 px-4 font-medium">$100</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-3 px-4">Spare key (prox / smart key)</td>
+                  <td className="py-3 px-4 font-medium">$182</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-3 px-4">All-keys-lost (non-prox)</td>
+                  <td className="py-3 px-4 font-medium">$175</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-3 px-4">All-keys-lost (prox / smart key)</td>
+                  <td className="py-3 px-4 font-medium">$312</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-3 px-4">Emergency unlock (lockout)</td>
+                  <td className="py-3 px-4 font-medium">$40</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-3 px-4">Diagnostic scan / battery replace</td>
+                  <td className="py-3 px-4 font-medium">$30</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-3 px-4">Remote shell swap & blade cut</td>
+                  <td className="py-3 px-4 font-medium">$45</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-3 px-4">Trip fee (0–10 km / 0–6 mi)</td>
+                  <td className="py-3 px-4 font-medium">$30</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4">Trip fee (10–25 km / 6–15 mi)</td>
+                  <td className="py-3 px-4 font-medium">$45</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold text-primary">Jobs</h1>
         
