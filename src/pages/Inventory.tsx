@@ -115,20 +115,25 @@ export default function Inventory() {
 
   // Key Categories for locksmith business
   const keyCategories = [
-    'Automotive Keys',
-    'Remotes', 
-    'Prox / Smart',
-    'Fobik',
-    'Blades',
-    'Other'
+    'Prox / Smart Keys',
+    'Remotes',
+    'Remote Head Keys (RHK)',
+    'Transponder Keys',
+    'Fobik Keys',
+    'Emergency Blades',
+    'Shells / Cases',
+    'Other / Tools / Accessories'
   ];
 
-  const keyTypes = [
-    'Flip',
-    'Remote',
-    'Prox / Smart',
-    'Blade Only',
-    'Transponder Only'
+  const chipTypes = [
+    '4C',
+    '4D (60–83 subtypes)',
+    '46',
+    '48',
+    '8A / H-Chip',
+    'AES',
+    'DST80',
+    'Other (manual entry)'
   ];
 
   const modules = [
@@ -932,13 +937,13 @@ export default function Inventory() {
                           </div>
 
                           <div>
-                            <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
+                            <Label htmlFor="key_type" className="mobile-text">Chip Type *</Label>
                             <Select value={formData.key_type} onValueChange={(value) => setFormData({ ...formData, key_type: value })}>
                               <SelectTrigger className="touch-target">
-                                <SelectValue placeholder="Select key type" />
+                                <SelectValue placeholder="Select chip type" />
                               </SelectTrigger>
                               <SelectContent>
-                                {keyTypes.map(type => (
+                                {chipTypes.map(type => (
                                   <SelectItem key={type} value={type}>{type}</SelectItem>
                                 ))}
                               </SelectContent>
