@@ -18,7 +18,7 @@ import { SkeletonCard } from '@/components/LoadingSpinner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { ActivityLogger } from '@/lib/activityLogger';
-import { CSVImport } from '@/components/CSVImport';
+import { Download } from 'lucide-react';
 
 interface InventoryItem {
   id: string;
@@ -643,6 +643,53 @@ export default function Inventory() {
     return alerts;
   };
 
+  const exportToCSV = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to export data",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('inventory-export', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Create blob and download
+      const blob = new Blob([data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inventory_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Success",
+        description: "Inventory exported successfully",
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export inventory data",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (!user) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -767,7 +814,14 @@ export default function Inventory() {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2">
-            <CSVImport />
+            <Button 
+              onClick={exportToCSV}
+              variant="outline"
+              className="gap-2 w-full sm:w-auto responsive-btn touch-target"
+            >
+              <Download className="h-4 w-4" />
+              <span className="sm:inline">Export CSV</span>
+            </Button>
             <Dialog open={dialogOpen} onOpenChange={(open) => {
               setDialogOpen(open);
               if (!open) resetForm();
