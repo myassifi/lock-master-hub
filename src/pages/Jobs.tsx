@@ -420,29 +420,9 @@ export default function Jobs() {
                   <td className="py-3 px-4">All-keys-lost (non-prox)</td>
                   <td className="py-3 px-4 font-medium">$175</td>
                 </tr>
-                <tr className="border-b">
+                <tr>
                   <td className="py-3 px-4">All-keys-lost (prox / smart key)</td>
                   <td className="py-3 px-4 font-medium">$312</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Emergency unlock (lockout)</td>
-                  <td className="py-3 px-4 font-medium">$40</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Diagnostic scan / battery replace</td>
-                  <td className="py-3 px-4 font-medium">$30</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Remote shell swap & blade cut</td>
-                  <td className="py-3 px-4 font-medium">$45</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Trip fee (0–10 km / 0–6 mi)</td>
-                  <td className="py-3 px-4 font-medium">$30</td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4">Trip fee (10–25 km / 6–15 mi)</td>
-                  <td className="py-3 px-4 font-medium">$45</td>
                 </tr>
               </tbody>
             </table>
