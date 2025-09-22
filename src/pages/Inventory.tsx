@@ -125,16 +125,6 @@ export default function Inventory() {
     'Other / Tools / Accessories'
   ];
 
-  const chipTypes = [
-    '4C',
-    '4D (60–83 subtypes)',
-    '46',
-    '48',
-    '8A / H-Chip',
-    'AES',
-    'DST80',
-    'Other (manual entry)'
-  ];
 
   const modules = [
     'ECU',
@@ -938,16 +928,14 @@ export default function Inventory() {
 
                           <div>
                             <Label htmlFor="key_type" className="mobile-text">Chip Type *</Label>
-                            <Select value={formData.key_type} onValueChange={(value) => setFormData({ ...formData, key_type: value })}>
-                              <SelectTrigger className="touch-target">
-                                <SelectValue placeholder="Select chip type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {chipTypes.map(type => (
-                                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <Input
+                              id="key_type"
+                              value={formData.key_type}
+                              onChange={(e) => setFormData({ ...formData, key_type: e.target.value })}
+                              required
+                              placeholder="e.g., 4C, 4D, 46, 48, 8A/H-Chip, AES, DST80"
+                              className="touch-target"
+                            />
                           </div>
                         </div>
 
