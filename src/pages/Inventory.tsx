@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -73,7 +74,7 @@ export default function Inventory() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [usageDialogOpen, setUsageDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
@@ -357,6 +358,21 @@ export default function Inventory() {
       }
     });
     return Array.from(years).sort((a, b) => b - a); // Sort descending (newest first)
+  };
+
+  const getVehicleCompatibility = (item: InventoryItem) => {
+    if (!item.make) return '';
+    
+    let compatibility = item.make;
+    if (item.year_from && item.year_to) {
+      compatibility += ` (${item.year_from}–${item.year_to})`;
+    } else if (item.year_from) {
+      compatibility += ` (${item.year_from}+)`;
+    } else if (item.year_to) {
+      compatibility += ` (up to ${item.year_to})`;
+    }
+    
+    return compatibility;
   };
 
   const getActiveFiltersCount = () => {
@@ -941,8 +957,8 @@ export default function Inventory() {
           </div>
           
           <div className="flex gap-2 w-full sm:w-auto">
-            <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
-              <DialogTrigger asChild>
+            <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
+              <DrawerTrigger asChild>
                 <Button variant="outline" className="gap-2 touch-target">
                   <SlidersHorizontal className="h-4 w-4" />
                   Filters
@@ -951,18 +967,16 @@ export default function Inventory() {
                       {getActiveFiltersCount()}
                     </Badge>
                   )}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-md" aria-describedby="filter-description">
-                <DialogHeader>
-                  <DialogTitle>Filter Inventory</DialogTitle>
-                  <p id="filter-description" className="text-sm text-muted-foreground">
-                    Apply filters to find specific inventory items by category, brand, stock status, and more.
-                  </p>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Category</Label>
+                 </Button>
+               </DrawerTrigger>
+               <DrawerContent className="h-[80vh]">
+                 <DrawerHeader>
+                   <DrawerTitle>Advanced Filters</DrawerTitle>
+                 </DrawerHeader>
+                 <div className="p-4 space-y-6 overflow-y-auto">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                       <Label>Category</Label>
                     <Select value={filters.category} onValueChange={(value) => handleFilterChange({ category: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -974,10 +988,10 @@ export default function Inventory() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                    </div>
 
-                  <div>
-                    <Label>Make</Label>
+                    <div>
+                      <Label>Make</Label>
                     <Select value={filters.make} onValueChange={(value) => handleFilterChange({ make: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -989,10 +1003,10 @@ export default function Inventory() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                    </div>
 
-                  <div>
-                    <Label>Module</Label>
+                    <div>
+                      <Label>Module</Label>
                     <Select value={filters.module} onValueChange={(value) => handleFilterChange({ module: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -1004,25 +1018,10 @@ export default function Inventory() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                    </div>
 
-                  <div>
-                    <Label>Stock Status</Label>
-                    <Select value={filters.stockStatus} onValueChange={(value) => handleFilterChange({ stockStatus: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Items</SelectItem>
-                        <SelectItem value="good">In Stock</SelectItem>
-                        <SelectItem value="low">Low Stock</SelectItem>
-                        <SelectItem value="out">Out of Stock</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Supplier</Label>
+                    <div>
+                      <Label>Supplier</Label>
                     <Select value={filters.supplier} onValueChange={(value) => handleFilterChange({ supplier: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -1034,10 +1033,10 @@ export default function Inventory() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                    </div>
 
-                  <div>
-                    <Label>Price Range</Label>
+                    <div>
+                      <Label>Price Range</Label>
                     <Select value={filters.priceRange} onValueChange={(value) => handleFilterChange({ priceRange: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -1050,10 +1049,10 @@ export default function Inventory() {
                         <SelectItem value="none">No Price Set</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                    </div>
 
-                  <div>
-                    <Label>Year</Label>
+                    <div>
+                      <Label>Year</Label>
                     <Select value={filters.year} onValueChange={(value) => handleFilterChange({ year: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -1066,6 +1065,7 @@ export default function Inventory() {
                         ))}
                       </SelectContent>
                     </Select>
+                    </div>
                   </div>
 
                   <div>
@@ -1100,13 +1100,13 @@ export default function Inventory() {
                     <Button onClick={clearFilters} variant="outline" className="flex-1">
                       Clear All
                     </Button>
-                    <Button onClick={() => setFilterDialogOpen(false)} className="flex-1">
-                      Apply
-                    </Button>
+                    <DrawerClose asChild>
+                      <Button className="flex-1">Apply</Button>
+                    </DrawerClose>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+              </DrawerContent>
+            </Drawer>
 
             {getActiveFiltersCount() > 0 && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="touch-target">
@@ -1165,35 +1165,46 @@ export default function Inventory() {
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                       <span className="truncate">{item.key_type}</span>
-                      {isLowStock(item) && (
+                      {item.quantity === 0 && (
+                        <Badge variant="destructive" className="text-xs">
+                          Out of stock
+                        </Badge>
+                      )}
+                      {isLowStock(item) && item.quantity > 0 && (
                         <AlertTriangle className="h-4 w-4 text-destructive animate-pulse flex-shrink-0" />
                       )}
                     </CardTitle>
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {item.category || 'General'}
-                      </Badge>
-                      {item.make && (
-                        <Badge variant="secondary" className="text-xs">
-                          {item.make}
+                    
+                    {/* Vehicle Compatibility Chips */}
+                    {getVehicleCompatibility(item) && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
+                          {getVehicleCompatibility(item)}
                         </Badge>
+                      </div>
+                    )}
+                    
+                    {/* SKU, FCC ID, and Supplier line */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span className="text-xs text-muted-foreground">SKU: {item.sku}</span>
+                      {item.fcc_id && (
+                        <>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <span className="text-xs text-muted-foreground">FCC ID: {item.fcc_id}</span>
+                        </>
                       )}
-                      {item.module && (
-                        <Badge variant="outline" className="text-xs">
-                          {item.module}
-                        </Badge>
+                      {item.supplier && (
+                        <>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {item.supplier}
+                          </Badge>
+                        </>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                      SKU: {item.sku}
-                    </p>
-                    {item.fcc_id && (
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                        FCC ID: {item.fcc_id}
-                      </p>
-                    )}
+                    
                     {item.usage_count && item.usage_count > 0 && (
-                      <p className="text-xs text-blue-600">
+                      <p className="text-xs text-blue-600 mt-1">
                         Used {item.usage_count} times
                       </p>
                     )}
