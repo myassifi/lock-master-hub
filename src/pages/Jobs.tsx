@@ -693,29 +693,29 @@ export default function Jobs() {
                   </div>
                   
                   <div className="space-y-2">
-                    {/* Pricing Information */}
-                    <div className="space-y-1">
-                      {job.price && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Service:</span>
-                          <span className="font-medium">${Number(job.price).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {job.material_cost && job.material_cost > 0 && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Materials:</span>
-                          <span className="font-medium text-orange-600">${Number(job.material_cost).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {job.profit_margin !== undefined && job.profit_margin !== null && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Profit:</span>
-                          <span className={`font-medium ${job.profit_margin > 50 ? 'text-green-600' : job.profit_margin > 25 ? 'text-yellow-600' : 'text-red-600'}`}>
-                            {Number(job.profit_margin).toFixed(1)}%
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                     {/* Pricing Information */}
+                     <div className="space-y-1">
+                       {job.price && (
+                         <div className="flex items-center justify-between">
+                           <span className="text-muted-foreground">Price:</span>
+                           <span className="font-medium text-green-600">${Number(job.price).toFixed(2)}</span>
+                         </div>
+                       )}
+                       {job.material_cost && job.material_cost > 0 && (
+                         <div className="flex items-center justify-between">
+                           <span className="text-muted-foreground">Materials:</span>
+                           <span className="font-medium text-orange-600">${Number(job.material_cost).toFixed(2)}</span>
+                         </div>
+                       )}
+                       {job.profit_margin !== undefined && job.profit_margin !== null && job.profit_margin > 0 && (
+                         <div className="flex items-center justify-between">
+                           <span className="text-muted-foreground">Profit:</span>
+                           <span className={`font-medium ${job.profit_margin > 50 ? 'text-green-600' : job.profit_margin > 25 ? 'text-yellow-600' : 'text-red-600'}`}>
+                             {Number(job.profit_margin).toFixed(1)}%
+                           </span>
+                         </div>
+                       )}
+                     </div>
                     
                     {job.customers?.phone && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
