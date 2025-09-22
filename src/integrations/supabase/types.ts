@@ -253,6 +253,7 @@ export type Database = {
           updated_at: string
           user_id: string
           vehicle_lock_details: string | null
+          vehicle_year: string | null
         }
         Insert: {
           created_at?: string
@@ -270,6 +271,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           vehicle_lock_details?: string | null
+          vehicle_year?: string | null
         }
         Update: {
           created_at?: string
@@ -287,6 +289,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vehicle_lock_details?: string | null
+          vehicle_year?: string | null
         }
         Relationships: [
           {
