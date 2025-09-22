@@ -116,16 +116,71 @@ export default function Inventory() {
   // Key Categories for locksmith business
   const keyCategories = [
     'Automotive Keys',
-    'House Keys', 
-    'Commercial Keys',
-    'High Security Keys',
-    'Remote Fobs',
-    'Smart Keys',
-    'Key Blanks',
-    'Hardware',
-    'Tools',
-    'General'
+    'Remotes', 
+    'Prox / Smart',
+    'Fobik',
+    'Blades',
+    'Other'
   ];
+
+  const keyTypes = [
+    'Flip',
+    'Remote',
+    'Prox / Smart',
+    'Blade Only',
+    'Transponder Only'
+  ];
+
+  const modules = [
+    'ECU',
+    'BCM',
+    'Smart Module',
+    'Immobilizer',
+    'N/A'
+  ];
+
+  const suppliers = [
+    'Xhorse',
+    'Autel',
+    'KeylessFactory',
+    'Keydiy',
+    'GTL',
+    'JMA',
+    'Ilco',
+    'Silca',
+    'Advanced Keys',
+    'Keyline'
+  ];
+
+  // Vehicle make/model data
+  const vehicleData = {
+    'Toyota': ['Camry', 'Corolla', 'Prius', 'RAV4', 'Highlander', 'Sienna', 'Tacoma', 'Tundra', 'Sequoia', '4Runner'],
+    'Honda': ['Civic', 'Accord', 'CR-V', 'Pilot', 'Odyssey', 'HR-V', 'Passport', 'Ridgeline', 'Insight'],
+    'Ford': ['F-150', 'Escape', 'Explorer', 'Edge', 'Fusion', 'Focus', 'Mustang', 'Transit', 'Expedition'],
+    'GM': ['Silverado', 'Equinox', 'Malibu', 'Traverse', 'Tahoe', 'Suburban', 'Impala', 'Cruze'],
+    'Chevrolet': ['Silverado', 'Equinox', 'Malibu', 'Traverse', 'Tahoe', 'Suburban', 'Impala', 'Cruze'],
+    'Hyundai': ['Elantra', 'Sonata', 'Tucson', 'Santa Fe', 'Accent', 'Venue', 'Palisade', 'Genesis'],
+    'Kia': ['Optima', 'Forte', 'Sportage', 'Sorento', 'Soul', 'Rio', 'Stinger', 'Telluride'],
+    'Lexus': ['ES', 'RX', 'NX', 'GX', 'LX', 'IS', 'GS', 'LS', 'LC'],
+    'Nissan': ['Altima', 'Sentra', 'Rogue', 'Pathfinder', 'Murano', 'Titan', 'Frontier', 'Armada'],
+    'BMW': ['3 Series', '5 Series', '7 Series', 'X3', 'X5', 'X7', 'i3', 'i8'],
+    'Mercedes': ['C-Class', 'E-Class', 'S-Class', 'GLC', 'GLE', 'GLS', 'A-Class'],
+    'Audi': ['A3', 'A4', 'A6', 'A8', 'Q3', 'Q5', 'Q7', 'Q8'],
+    'Volkswagen': ['Jetta', 'Passat', 'Tiguan', 'Atlas', 'Golf', 'Arteon'],
+    'Subaru': ['Outback', 'Forester', 'Impreza', 'Legacy', 'Ascent', 'Crosstrek'],
+    'Mazda': ['Mazda3', 'Mazda6', 'CX-5', 'CX-9', 'CX-30', 'MX-5 Miata'],
+    'Acura': ['TLX', 'RDX', 'MDX', 'ILX', 'NSX'],
+    'Infiniti': ['Q50', 'Q60', 'QX50', 'QX60', 'QX80'],
+    'Cadillac': ['Escalade', 'XT5', 'XT6', 'CT5', 'CT6'],
+    'Lincoln': ['Navigator', 'Aviator', 'Corsair', 'Nautilus', 'Continental'],
+    'Jeep': ['Wrangler', 'Grand Cherokee', 'Cherokee', 'Compass', 'Renegade', 'Gladiator'],
+    'Dodge': ['Charger', 'Challenger', 'Durango', 'Journey'],
+    'Chrysler': ['Pacifica', '300'],
+    'Ram': ['1500', '2500', '3500'],
+    'Universal': ['Universal']
+  };
+
+  const availableYears = Array.from({ length: new Date().getFullYear() + 2 - 1995 }, (_, i) => 1995 + i);
 
   const exportToCSV = async () => {
     try {
@@ -833,170 +888,251 @@ export default function Inventory() {
                   <span className="sm:inline">Add Item</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto" aria-describedby="inventory-form-description">
-              <DialogHeader>
-                <DialogTitle className="mobile-text">
-                  {editingItem ? 'Edit Item' : 'Add New Item'}
-                </DialogTitle>
-                <p id="inventory-form-description" className="text-sm text-muted-foreground">
-                  {editingItem ? 'Update the details of this inventory item.' : 'Add a new item to your inventory with details like SKU, category, and pricing.'}
-                </p>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="sku" className="mobile-text">SKU *</Label>
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    required
-                    placeholder="e.g., HY17, HON66"
-                    className="touch-target"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="category" className="mobile-text">Category *</Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                      <SelectTrigger className="touch-target">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {keyCategories.map(category => (
-                          <SelectItem key={category} value={category}>{category}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+              <DialogContent className="w-[95vw] max-w-4xl mx-auto max-h-[90vh] overflow-y-auto" aria-describedby="inventory-form-description">
+                <DialogHeader>
+                  <DialogTitle className="mobile-text">
+                    {editingItem ? 'Edit Item' : 'Add New Item'}
+                  </DialogTitle>
+                  <p id="inventory-form-description" className="text-sm text-muted-foreground">
+                    {editingItem ? 'Update the details of this inventory item.' : 'Add a new item to your inventory with details like SKU, category, and pricing.'}
+                  </p>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Left Column - Basic Information */}
+                    <div className="space-y-6">
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Basic Information</h3>
+                        
+                        <div>
+                          <Label htmlFor="sku" className="mobile-text">SKU *</Label>
+                          <Input
+                            id="sku"
+                            value={formData.sku}
+                            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                            required
+                            placeholder="e.g., HY17, HON66"
+                            className="touch-target"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="category" className="mobile-text">Category *</Label>
+                            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                              <SelectTrigger className="touch-target">
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {keyCategories.map(category => (
+                                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
+                            <Select value={formData.key_type} onValueChange={(value) => setFormData({ ...formData, key_type: value })}>
+                              <SelectTrigger className="touch-target">
+                                <SelectValue placeholder="Select key type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {keyTypes.map(type => (
+                                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="quantity" className="mobile-text">Quantity *</Label>
+                            <Input
+                              id="quantity"
+                              type="number"
+                              min="0"
+                              value={formData.quantity}
+                              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                              required
+                              className="touch-target"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="cost" className="mobile-text">Cost *</Label>
+                            <Input
+                              id="cost"
+                              type="number"
+                              step="0.01"
+                              value={formData.cost}
+                              onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                              required
+                              placeholder="0.00"
+                              className="touch-target"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="fcc_id" className="mobile-text">FCC ID</Label>
+                          <Input
+                            id="fcc_id"
+                            value={formData.fcc_id}
+                            onChange={(e) => setFormData({ ...formData, fcc_id: e.target.value })}
+                            placeholder="e.g., 2AATX-XKHY01EN"
+                            className="touch-target"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column - Vehicle & Technical Details */}
+                    <div className="space-y-6">
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Vehicle Details</h3>
+                        
+                        <div>
+                          <Label htmlFor="make" className="mobile-text">Make *</Label>
+                          <Select 
+                            value={formData.make} 
+                            onValueChange={(value) => setFormData({ ...formData, make: value, module: '' })}
+                          >
+                            <SelectTrigger className="touch-target">
+                              <SelectValue placeholder="Select make" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.keys(vehicleData).map(make => (
+                                <SelectItem key={make} value={make}>{make}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="module" className="mobile-text">Model</Label>
+                          <Select 
+                            value={formData.module} 
+                            onValueChange={(value) => setFormData({ ...formData, module: value })}
+                            disabled={!formData.make}
+                          >
+                            <SelectTrigger className="touch-target">
+                              <SelectValue placeholder={formData.make ? "Select model" : "Select make first"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {formData.make && vehicleData[formData.make as keyof typeof vehicleData]?.map(model => (
+                                <SelectItem key={model} value={model}>{model}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="year_from" className="mobile-text">Year From *</Label>
+                            <Select 
+                              value={formData.year_from} 
+                              onValueChange={(value) => setFormData({ ...formData, year_from: value })}
+                            >
+                              <SelectTrigger className="touch-target">
+                                <SelectValue placeholder="Start year" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableYears.map(year => (
+                                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="year_to" className="mobile-text">Year To *</Label>
+                            <Select 
+                              value={formData.year_to} 
+                              onValueChange={(value) => setFormData({ ...formData, year_to: value })}
+                            >
+                              <SelectTrigger className="touch-target">
+                                <SelectValue placeholder="End year" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableYears.map(year => (
+                                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Technical Details</h3>
+                        
+                        <div>
+                          <Label htmlFor="module_type" className="mobile-text">Module</Label>
+                          <Select 
+                            value={formData.module || ''} 
+                            onValueChange={(value) => setFormData({ ...formData, module: value })}
+                          >
+                            <SelectTrigger className="touch-target">
+                              <SelectValue placeholder="Select module" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modules.map(module => (
+                                <SelectItem key={module} value={module}>{module}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="supplier" className="mobile-text">Supplier</Label>
+                          <Select 
+                            value={formData.supplier} 
+                            onValueChange={(value) => {
+                              if (value === 'add_new') {
+                                // Handle adding new supplier here
+                                const newSupplier = prompt('Enter new supplier name:');
+                                if (newSupplier) {
+                                  setFormData({ ...formData, supplier: newSupplier });
+                                }
+                              } else {
+                                setFormData({ ...formData, supplier: value });
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="touch-target">
+                              <SelectValue placeholder="Select supplier" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {suppliers.map(supplier => (
+                                <SelectItem key={supplier} value={supplier}>{supplier}</SelectItem>
+                              ))}
+                              <SelectItem value="add_new" className="text-primary font-medium">
+                                + Add Supplier
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="make" className="mobile-text">Make</Label>
-                    <Input
-                      id="make"
-                      value={formData.make}
-                      onChange={(e) => setFormData({ ...formData, make: e.target.value })}
-                      placeholder="e.g., Toyota, Honda, Ford"
-                      className="touch-target"
-                    />
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
+                    <Button type="submit" className="flex-1 touch-target responsive-btn">
+                      {editingItem ? 'Update Item' : 'Save Item'}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setDialogOpen(false)}
+                      className="touch-target responsive-btn"
+                    >
+                      Cancel
+                    </Button>
                   </div>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="key_type" className="mobile-text">Key Type *</Label>
-                    <Input
-                      id="key_type"
-                      value={formData.key_type}
-                      onChange={(e) => setFormData({ ...formData, key_type: e.target.value })}
-                      required
-                      placeholder="e.g., Toyota G Chip, Remote Fob"
-                      className="touch-target"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="module" className="mobile-text">Module</Label>
-                    <Input
-                      id="module"
-                      value={formData.module}
-                      onChange={(e) => setFormData({ ...formData, module: e.target.value })}
-                      placeholder="e.g., ECU, BCM, Smart Module"
-                      className="touch-target"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="quantity" className="mobile-text">Quantity *</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      min="0"
-                      value={formData.quantity}
-                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                      required
-                      className="touch-target"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="cost" className="mobile-text">Cost</Label>
-                    <Input
-                      id="cost"
-                      type="number"
-                      step="0.01"
-                      value={formData.cost}
-                      onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                      placeholder="0.00"
-                      className="touch-target"
-                    />
-                  </div>
-                </div>
-                
-                {/* Vehicle Year Range Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="year_from" className="mobile-text">Year From (Vehicle)</Label>
-                    <Input
-                      id="year_from"
-                      type="number"
-                      min="1900"
-                      max="2030"
-                      value={formData.year_from}
-                      onChange={(e) => setFormData({ ...formData, year_from: e.target.value })}
-                      placeholder="e.g., 2015"
-                      className="touch-target"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="year_to" className="mobile-text">Year To (Vehicle)</Label>
-                    <Input
-                      id="year_to"
-                      type="number"
-                      min="1900"
-                      max="2030"
-                      value={formData.year_to}
-                      onChange={(e) => setFormData({ ...formData, year_to: e.target.value })}
-                      placeholder="e.g., 2023"
-                      className="touch-target"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="supplier" className="mobile-text">Supplier</Label>
-                  <Input
-                    id="supplier"
-                    value={formData.supplier}
-                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                    placeholder="Supplier name"
-                    className="touch-target"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="fcc_id" className="mobile-text">FCC ID</Label>
-                  <Input
-                    id="fcc_id"
-                    value={formData.fcc_id}
-                    onChange={(e) => setFormData({ ...formData, fcc_id: e.target.value })}
-                    placeholder="e.g., 2AATX-XKHY01EN"
-                    className="touch-target"
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button type="submit" className="flex-1 touch-target responsive-btn">
-                    {editingItem ? 'Update' : 'Add'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setDialogOpen(false)}
-                    className="touch-target responsive-btn"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
+                </form>
+              </DialogContent>
           </Dialog>
         </div>
       </div>
