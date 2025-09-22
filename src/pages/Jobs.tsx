@@ -92,6 +92,7 @@ export default function Jobs() {
     customer_id: '',
     job_type: '',
     vehicle_lock_details: '',
+    vehicle_year: '',
     price: '',
     job_date: format(new Date(), 'yyyy-MM-dd'),
     status: 'pending',
@@ -244,6 +245,7 @@ export default function Jobs() {
       customer_id: job.customer_id,
       job_type: job.job_type,
       vehicle_lock_details: job.vehicle_lock_details || '',
+      vehicle_year: (job as any).vehicle_year || '',
       price: job.price ? job.price.toString() : '',
       job_date: job.job_date,
       status: job.status,
@@ -323,6 +325,7 @@ export default function Jobs() {
       customer_id: '',
       job_type: '',
       vehicle_lock_details: '',
+      vehicle_year: '',
       price: '',
       job_date: format(new Date(), 'yyyy-MM-dd'),
       status: 'pending',
@@ -448,14 +451,38 @@ export default function Jobs() {
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="vehicle_lock_details">Vehicle/Lock Details</Label>
-                <Input
-                  id="vehicle_lock_details"
-                  value={formData.vehicle_lock_details}
-                  onChange={(e) => setFormData({ ...formData, vehicle_lock_details: e.target.value })}
-                  placeholder="e.g., 2019 Honda Civic, Front door lock"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="vehicle_lock_details">Vehicle/Lock Details</Label>
+                  <Input
+                    id="vehicle_lock_details"
+                    value={formData.vehicle_lock_details}
+                    onChange={(e) => setFormData({ ...formData, vehicle_lock_details: e.target.value })}
+                    placeholder="e.g., Honda Civic, Front door lock"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="vehicle_year">Vehicle Year</Label>
+                  <Select
+                    value={formData.vehicle_year}
+                    onValueChange={(value) => setFormData({ ...formData, vehicle_year: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: new Date().getFullYear() - 1994 }, (_, i) => {
+                        const year = new Date().getFullYear() + 1 - i;
+                        return (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
