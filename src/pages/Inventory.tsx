@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Package2, AlertCircle } from 'lucide-react';
+import { Plus, Search, Package2, AlertCircle, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,9 +13,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { InventoryDataTable } from '@/components/inventory/InventoryDataTable';
-import { InventoryCard } from '@/components/inventory/InventoryCard';
+import { SwipeableInventoryCard } from '@/components/mobile/SwipeableCard';
+import { PageShell } from '@/components/mobile/PageShell';
 import { InventoryFilters } from '@/components/inventory/InventoryFilters';
-import { X } from 'lucide-react';
 
 interface InventoryItem {
   id: string;
@@ -389,162 +389,165 @@ export default function InventoryNew() {
     });
   };
 
+  const handleRefresh = async () => {
+    await loadInventory();
+    toast({
+      title: 'Refreshed',
+      description: 'Inventory data updated',
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col gap-4">
-            {/* Title and Actions Row */}
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold">Inventory</h1>
-              <div className="flex items-center gap-2">
-                <InventoryFilters
-                  filters={filters}
-                  onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
-                  onReset={clearFilters}
-                  suppliers={uniqueSuppliers}
-                  makes={uniqueMakes}
-                  categories={uniqueCategories}
-                />
-                <Button onClick={() => { resetForm(); setDialogOpen(true); }} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Add Item</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, FCC ID, supplier..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Active Filters */}
-            {activeFiltersCount > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {filters.category !== 'all' && (
-                  <Badge variant="secondary" className="gap-1">
-                    Category: {filters.category}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => setFilters({ ...filters, category: 'all' })} />
-                  </Badge>
-                )}
-                {filters.make !== 'all' && (
-                  <Badge variant="secondary" className="gap-1">
-                    Make: {filters.make}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => setFilters({ ...filters, make: 'all' })} />
-                  </Badge>
-                )}
-                {filters.supplier !== 'all' && (
-                  <Badge variant="secondary" className="gap-1">
-                    Supplier: {filters.supplier}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => setFilters({ ...filters, supplier: 'all' })} />
-                  </Badge>
-                )}
-                {filters.fccId && (
-                  <Badge variant="secondary" className="gap-1">
-                    FCC ID: {filters.fccId}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => setFilters({ ...filters, fccId: '' })} />
-                  </Badge>
-                )}
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  Clear all
-                </Button>
-              </div>
-            )}
-
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full justify-start overflow-x-auto">
-                <TabsTrigger value="all" className="gap-2">
-                  All <Badge variant="secondary" className="ml-1">{stats.all}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="low" className="gap-2">
-                  Low Stock <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-800 border-amber-200">{stats.low}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="out" className="gap-2">
-                  Out <Badge variant="destructive" className="ml-1">{stats.out}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="in-stock" className="gap-2">
-                  In Stock <Badge variant="secondary" className="ml-1">{stats.inStock}</Badge>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+    <PageShell
+      title="Inventory"
+      subtitle="Smart Inventory Management"
+      actions={
+        <>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            className="touch-target"
+            aria-label="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <InventoryFilters
+            filters={filters}
+            onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
+            onReset={clearFilters}
+            suppliers={uniqueSuppliers}
+            makes={uniqueMakes}
+            categories={uniqueCategories}
+          />
+          <Button onClick={() => { resetForm(); setDialogOpen(true); }} className="gap-2 touch-target">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Item</span>
+          </Button>
+        </>
+      }
+      tabs={
+        <div className="space-y-3">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search by name, FCC ID, supplier..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 touch-target"
+            />
           </div>
+
+          {/* Active Filters */}
+          {activeFiltersCount > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {filters.category !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Category: {filters.category}
+                  <X className="h-3 w-3 cursor-pointer touch-target" onClick={() => setFilters({ ...filters, category: 'all' })} />
+                </Badge>
+              )}
+              {filters.make !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Make: {filters.make}
+                  <X className="h-3 w-3 cursor-pointer touch-target" onClick={() => setFilters({ ...filters, make: 'all' })} />
+                </Badge>
+              )}
+              {filters.supplier !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Supplier: {filters.supplier}
+                  <X className="h-3 w-3 cursor-pointer touch-target" onClick={() => setFilters({ ...filters, supplier: 'all' })} />
+                </Badge>
+              )}
+              {filters.fccId && (
+                <Badge variant="secondary" className="gap-1">
+                  FCC ID: {filters.fccId}
+                  <X className="h-3 w-3 cursor-pointer touch-target" onClick={() => setFilters({ ...filters, fccId: '' })} />
+                </Badge>
+              )}
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="touch-target">
+                Clear all
+              </Button>
+            </div>
+          )}
+
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full justify-start overflow-x-auto grid grid-cols-4">
+              <TabsTrigger value="all" className="gap-2 touch-target">
+                All <Badge variant="secondary" className="ml-1">{stats.all}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="low" className="gap-2 touch-target">
+                Low <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-400">{stats.low}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="out" className="gap-2 touch-target">
+                Out <Badge variant="destructive" className="ml-1">{stats.out}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="in-stock" className="gap-2 touch-target">
+                In Stock <Badge variant="secondary" className="ml-1">{stats.inStock}</Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
-      </div>
-
+      }
+    >
       {/* Content */}
-      <div className="container mx-auto px-4 py-6">
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="lg:hidden">
-                <Skeleton className="h-48 rounded-2xl" />
-              </div>
-            ))}
-            <div className="hidden lg:block space-y-2">
-              <Skeleton className="h-12 rounded-2xl" />
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 rounded-2xl" />
-              ))}
-            </div>
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-2xl" />
+          ))}
+        </div>
+      ) : filteredInventory.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          {searchTerm || activeFiltersCount > 0 ? (
+            <>
+              <AlertCircle className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No items match your filters</h3>
+              <p className="text-muted-foreground mb-4">Try adjusting your search or filters</p>
+              <Button variant="outline" onClick={() => { setSearchTerm(''); clearFilters(); }} className="touch-target">
+                Clear all filters
+              </Button>
+            </>
+          ) : (
+            <>
+              <Package2 className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No inventory items yet</h3>
+              <p className="text-muted-foreground mb-4">Add your first item to get started</p>
+              <Button onClick={() => { resetForm(); setDialogOpen(true); }} className="gap-2 touch-target">
+                <Plus className="h-4 w-4" />
+                Add Item
+              </Button>
+            </>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden lg:block">
+            <InventoryDataTable
+              data={filteredInventory}
+              onQuantityChange={handleQuantityChange}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           </div>
-        ) : filteredInventory.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            {searchTerm || activeFiltersCount > 0 ? (
-              <>
-                <AlertCircle className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No items match your filters</h3>
-                <p className="text-muted-foreground mb-4">Try adjusting your search or filters</p>
-                <Button variant="outline" onClick={() => { setSearchTerm(''); clearFilters(); }}>
-                  Clear all filters
-                </Button>
-              </>
-            ) : (
-              <>
-                <Package2 className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No inventory items yet</h3>
-                <p className="text-muted-foreground mb-4">Add your first item to get started</p>
-                <Button onClick={() => { resetForm(); setDialogOpen(true); }} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Item
-                </Button>
-              </>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden lg:block">
-              <InventoryDataTable
-                data={filteredInventory}
+
+          {/* Mobile Card View with Swipe Actions */}
+          <div className="space-y-3 lg:hidden">
+            {filteredInventory.map((item) => (
+              <SwipeableInventoryCard
+                key={item.id}
+                item={item}
                 onQuantityChange={handleQuantityChange}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:hidden">
-              {filteredInventory.map((item) => (
-                <InventoryCard
-                  key={item.id}
-                  item={item}
-                  onQuantityChange={handleQuantityChange}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
@@ -694,16 +697,16 @@ export default function InventoryNew() {
             </div>
 
             <div className="flex gap-3">
-              <Button type="submit" className="flex-1">
+              <Button type="submit" className="flex-1 touch-target">
                 {editingItem ? 'Update Item' : 'Add Item'}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="touch-target">
                 Cancel
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   );
 }

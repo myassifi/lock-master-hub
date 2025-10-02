@@ -2,6 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { BottomNav } from '@/components/mobile/BottomNav';
 import { Button } from '@/components/ui/button';
 import { LogOut, Flame, Menu } from 'lucide-react';
 
@@ -67,8 +68,13 @@ export function Layout({ children }: LayoutProps) {
           </main>
         </div>
         
-        {/* Floating Action Button for Mobile */}
-        <FloatingActionButton />
+        {/* Bottom Navigation for Mobile */}
+        <BottomNav />
+        
+        {/* Floating Action Button for Mobile (hidden when bottom nav is active) */}
+        <div className="md:block hidden">
+          <FloatingActionButton />
+        </div>
       </div>
     </SidebarProvider>
   );
