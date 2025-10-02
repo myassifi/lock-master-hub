@@ -1340,7 +1340,7 @@ export default function Inventory() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <span className="truncate">{item.key_type}</span>
+                      <span className="truncate">{item.sku}</span>
                       {item.quantity === 0 && (
                         <Badge variant="destructive" className="text-xs">
                           Out of stock
@@ -1351,38 +1351,11 @@ export default function Inventory() {
                       )}
                     </CardTitle>
                     
-                    {/* Vehicle Compatibility Chips */}
-                    {getVehicleCompatibility(item) && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
-                          {getVehicleCompatibility(item)}
-                        </Badge>
+                    {/* FCC ID */}
+                    {item.fcc_id && (
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="text-xs text-muted-foreground">FCC ID: {item.fcc_id}</span>
                       </div>
-                    )}
-                    
-                    {/* Item name, FCC ID, and Supplier line */}
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <span className="text-xs text-muted-foreground">Item name: {item.sku}</span>
-                      {item.fcc_id && (
-                        <>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">FCC ID: {item.fcc_id}</span>
-                        </>
-                      )}
-                      {item.supplier && (
-                        <>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {item.supplier}
-                          </Badge>
-                        </>
-                      )}
-                    </div>
-                    
-                    {item.usage_count && item.usage_count > 0 && (
-                      <p className="text-xs text-blue-600 mt-1">
-                        Used {item.usage_count} times
-                      </p>
                     )}
                   </div>
                   <div className="flex gap-1">
@@ -1463,21 +1436,6 @@ export default function Inventory() {
                       <span className="font-bold text-green-600">${Number(item.total_cost_value).toFixed(2)}</span>
                     </div>
                   )}
-                  
-                  {item.supplier && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Supplier:</span>
-                      <span className="truncate max-w-[60%]" title={item.supplier}>{item.supplier}</span>
-                    </div>
-                  )}
-
-                  {item.last_used_date && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Last Used:</span>
-                      <span className="text-xs">{new Date(item.last_used_date).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                  
                 </div>
               </CardContent>
             </Card>
