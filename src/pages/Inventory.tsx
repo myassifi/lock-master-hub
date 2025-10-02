@@ -96,13 +96,21 @@ export default function Inventory() {
     quantity: '',
     cost: '',
     supplier: '',
-    category: 'Automotive Keys',
+    category: 'Prox / Smart Keys',
     make: '',
     module: '',
     year_from: '',
     year_to: '',
     fcc_id: ''
   });
+
+  // Auto-generate item name based on make, year, and category
+  useEffect(() => {
+    if (formData.make && formData.year_from && formData.category) {
+      const itemName = `${formData.make} ${formData.year_from} ${formData.category}`;
+      setFormData(prev => ({ ...prev, sku: itemName }));
+    }
+  }, [formData.make, formData.year_from, formData.category]);
 
   // Real-time updates
   useRealtimeUpdates({
@@ -120,6 +128,7 @@ export default function Inventory() {
     'Remote Head Keys (RHK)',
     'Transponder Keys',
     'Fobik Keys',
+    'Flip Key',
     'Emergency Blades',
     'Shells / Cases',
     'Other / Tools / Accessories'
@@ -900,13 +909,13 @@ export default function Inventory() {
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Basic Information</h3>
                         
                         <div>
-                          <Label htmlFor="sku" className="mobile-text">SKU *</Label>
+                          <Label htmlFor="sku" className="mobile-text">Item name *</Label>
                           <Input
                             id="sku"
                             value={formData.sku}
                             onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                             required
-                            placeholder="e.g., HY17, HON66"
+                            placeholder="e.g., Honda 2010 Flip Key"
                             className="touch-target"
                           />
                         </div>
@@ -1351,9 +1360,9 @@ export default function Inventory() {
                       </div>
                     )}
                     
-                    {/* SKU, FCC ID, and Supplier line */}
+                    {/* Item name, FCC ID, and Supplier line */}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <span className="text-xs text-muted-foreground">SKU: {item.sku}</span>
+                      <span className="text-xs text-muted-foreground">Item name: {item.sku}</span>
                       {item.fcc_id && (
                         <>
                           <span className="text-xs text-muted-foreground">•</span>
