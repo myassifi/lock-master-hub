@@ -1339,24 +1339,30 @@ export default function Inventory() {
               <CardHeader className="pb-3 responsive-card">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <span className="truncate">{item.sku}</span>
-                      {item.quantity === 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                          Out of stock
-                        </Badge>
-                      )}
-                      {isLowStock(item) && item.quantity > 0 && (
-                        <AlertTriangle className="h-4 w-4 text-destructive animate-pulse flex-shrink-0" />
-                      )}
-                    </CardTitle>
-                    
-                    {/* FCC ID */}
-                    {item.fcc_id && (
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className="text-xs text-muted-foreground">FCC ID: {item.fcc_id}</span>
+                    <div className="space-y-2">
+                      {/* Item Name */}
+                      <div className="flex items-start gap-2">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">Item name:</span>
+                        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                          <span className="truncate">{item.sku}</span>
+                          {item.quantity === 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              Out of stock
+                            </Badge>
+                          )}
+                          {isLowStock(item) && item.quantity > 0 && (
+                            <AlertTriangle className="h-4 w-4 text-destructive animate-pulse flex-shrink-0" />
+                          )}
+                        </CardTitle>
                       </div>
-                    )}
+                      
+                      {/* FCC ID */}
+                      {item.fcc_id && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-muted-foreground">FCC ID: {item.fcc_id}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-1">
                     <Button
